@@ -6,10 +6,10 @@ Estrategia híbrida que combina un dataset real de emociones en español con pre
 
 ```mermaid
 graph LR
-    A[GoEmotions ES<br/>54,263 filas, 28 emociones] --> D[Dataset Final<br/>~2000 ejemplos]
+    A[GoEmotions ES<br/>54,263 filas, 28 emociones] --> D[Dataset Final<br/>~5000 ejemplos]
     B[Stack Overflow ES API<br/>Preguntas reales + tags] --> D
     C[Copilot Models<br/>via copilot-api proxy] --> D
-    
+
     style A fill:#1c1c22,stroke:#22d3ee,color:#ededef
     style B fill:#1c1c22,stroke:#34d399,color:#ededef
     style C fill:#1c1c22,stroke:#c084fc,color:#ededef
@@ -23,14 +23,14 @@ graph LR
 ### 2.1 GoEmotions ES (Emociones)
 
 
-| Propiedad | Valor                                                        |
-| --------- | ------------------------------------------------------------ |
-| Dataset   | `AnasAlokla/multilingual_go_emotions` (HuggingFace)          |
-| Filas ES  | 54,263                                                       |
-| Emociones | 28 clases (multi-label)                                      |
-| Idioma    | Español (filtrado por language="sp")                         |
-| Metadata  | text, labels (IDs), id, language                             |
-| Licencia  | Apache 2.0                                                   |
+| Propiedad | Valor                                               |
+| --------- | --------------------------------------------------- |
+| Dataset   | `AnasAlokla/multilingual_go_emotions` (HuggingFace) |
+| Filas ES  | 54,263                                              |
+| Emociones | 28 clases (multi-label)                             |
+| Idioma    | Español (filtrado por language="sp")                |
+| Metadata  | text, labels (IDs), id, language                    |
+| Licencia  | Apache 2.0                                          |
 
 
 **Mapeo de emociones (28 → 9):**
@@ -79,23 +79,44 @@ graph LR
 | Otros                                              | `general`             |
 
 
-### 2.3 Copilot (Etiquetado de Dimensiones Faltantes)
+### 2.3 Fuentes complementarias (emoción y afín en español)
+
+Útiles para **aumentar cobertura emocional** y robustez fuera del estilo Reddit/GoEmotions, o para **pre-entrenar / regularizar** antes del dataset mezclado con programación. Siempre revisar licencia y **re-mapear** etiquetas al esquema Synapse (9 emociones) mediante reglas documentadas.
+
+
+| Dataset                                  | Enlace                                                                                                                       | Por qué aplica                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **GoEmotions multilingüe** (base actual) | [AnasAlokla/multilingual_go_emotions](https://huggingface.co/datasets/AnasAlokla/multilingual_go_emotions)                   | Gran volumen ES; multi-label fino → útil tras mapeo                              |
+| **EmoEvent** (ES)                        | [fmplaza/EmoEvent](https://huggingface.co/datasets/fmplaza/EmoEvent) (subconjunto español; puede requerir aceptación en Hub) | Tweets en español con emociones Ekman + ofensivo/no; útil para tono informal     |
+| **SemEval-2018 Task 1** (E-c, ES)        | [SemEvalWorkshop/sem_eval_2018_task_1](https://huggingface.co/datasets/SemEvalWorkshop/sem_eval_2018_task_1)                 | Emoción multi-label en tweets ES; etiquetas distintas → requiere mapeo cuidadoso |
+| **Preguntas técnicas ES**                | API/site `es.stackoverflow` + dump oficial SE                                                                                | Dominio “programación en español” nativo; ya integrado en el pipeline            |
+
+
+**Kaggle:** no hay un estándar único “SO español” en Kaggle; suele usarse **API/dump** (arriba) o subconjuntos de SO en inglés solo como data augmentation de *estilo* (con filtro de idioma si se mezcla).
+
+**Sintético (LLM):** misma política que en Copilot — generar variaciones controladas y **filtrar** con ROUGE-L / revisión manual para clases minoritarias.
+
+**Objetivo de volumen:** mínimo defendible **~2000** ejemplos curados; recomendado **4000–6000** para emociones/dominios minoritarios. **Umbral por clase rara:** apuntar a **≥100–150** ejemplos (real+aumentados); ideal **≥200**.
+
+### 2.4 Copilot (Etiquetado de Dimensiones Faltantes)
 
 Usamos Copilot via proxy OpenAI-compatible y rotamos modelos disponibles:
 
-| Modelo | Fuente | Uso principal |
-|--------|--------|---------------|
-| **gpt-5-mini** | Copilot | Etiquetado principal |
-| **gpt-4.1** | Copilot | Etiquetado secundario |
-| **gpt-4o** | Copilot | Respaldo de rotación |
+
+| Modelo         | Fuente  | Uso principal         |
+| -------------- | ------- | --------------------- |
+| **gpt-5-mini** | Copilot | Etiquetado principal  |
+| **gpt-4.1**    | Copilot | Etiquetado secundario |
+| **gpt-4o**     | Copilot | Respaldo de rotación  |
+
 
 **Estrategia de distribución:**
+
 - Rotación round-robin entre modelos configurados (`--models`)
 - Validación dinámica de IDs contra `GET /v1/models`
 - Reanudación incremental sobre `processed/labeled.json`
 
 **Tiempo estimado:** ~1 día para el lote de 250 preguntas SO ES
-
 
 ## 3. Pipeline de Generación
 
@@ -123,7 +144,7 @@ graph TD
 
     subgraph PASO5["Paso 5: Validación"]
         E1[Dataset ampliado] --> E2[Filtrar duplicados<br/>ROUGE-L > 0.8]
-        E2 --> E3[Validar balance<br/>≥ 50 ejemplos/clase]
+        E2 --> E3[Validar balance<br/>≥100–150 /clase minoritaria]
         E3 --> E4[Dataset final]
     end
 
@@ -237,7 +258,7 @@ graph LR
     A[Dataset base<br/>~500 ejemplos] --> B[NLPaug<br/>Sustitución sinónimos]
     A --> C[Paráfrasis LLM<br/>Reformular sin cambiar sentido]
     A --> D[Back-translation<br/>ES → EN → ES]
-    B --> E[Dataset ampliado<br/>~2000 ejemplos]
+    B --> E[Dataset ampliado<br/>~5000 ejemplos]
     C --> E
     D --> E
 
@@ -250,18 +271,17 @@ graph LR
 ### Paso 5: Filtrado y Validación
 
 - Eliminar duplicados (similitud ROUGE-L > 0.8)
-- Validar que cada clase tenga al menos 50 ejemplos
-- Revisar muestra manual (Carlos + Sebastián)
+- Validar clases minoritarias: **≥100–150** ejemplos (ideal **≥200**); ampliar dataset hacia **4k–6k** ejemplos cuando sea posible
 
 ## 4. Distribución de Clases Objetivo
 
 
 | Dimensión     | Etiquetas                              | Ejemplos por clase | Total |
 | ------------- | -------------------------------------- | ------------------ | ----- |
-| Nivel técnico | 3 (principiante, intermedio, avanzado) | ~667               | 2000  |
-| Urgencia      | 3 (baja, media, alta)                  | ~667               | 2000  |
-| Emoción       | 9                                      | ~222               | 2000  |
-| Dominio       | 11                                     | ~182               | 2000  |
+| Nivel técnico | 3 (principiante, intermedio, avanzado) | ~667               | 5000  |
+| Urgencia      | 3 (baja, media, alta)                  | ~667               | 5000  |
+| Emoción       | 9                                      | ~222               | 5000  |
+| Dominio       | 11                                     | ~182               | 5000  |
 
 
 ## 5. Formato del Dataset
@@ -292,14 +312,14 @@ graph LR
 ## 6. Herramientas
 
 
-| Herramienta                     | Uso                             | Fuente                                                                                 |
-| ------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
-| Stack Exchange API              | Extraer preguntas semilla       | `api.stackexchange.com`                                                                |
-| GoEmotions ES (AnasAlokla)      | Dataset de emociones en español | [HuggingFace](https://huggingface.co/datasets/AnasAlokla/multilingual_go_emotions)    |
-| GitHub Copilot + copilot-api    | Etiquetado (urgencia + nivel)   | `npx copilot-api@latest start --port 4141`                                            |
-| NLPaug                          | Data augmentation               | `pip install nlpaug`                                                                   |
-| ROUGE-L                         | Filtrado de duplicados          | `pip install rouge-score`                                                              |
-| Python + pandas                 | Procesamiento y limpieza        | -                                                                                      |
+| Herramienta                  | Uso                             | Fuente                                                                             |
+| ---------------------------- | ------------------------------- | ---------------------------------------------------------------------------------- |
+| Stack Exchange API           | Extraer preguntas semilla       | `api.stackexchange.com`                                                            |
+| GoEmotions ES (AnasAlokla)   | Dataset de emociones en español | [HuggingFace](https://huggingface.co/datasets/AnasAlokla/multilingual_go_emotions) |
+| GitHub Copilot + copilot-api | Etiquetado (urgencia + nivel)   | `npx copilot-api@latest start --port 4141`                                         |
+| NLPaug                       | Data augmentation               | `pip install nlpaug`                                                               |
+| ROUGE-L                      | Filtrado de duplicados          | `pip install rouge-score`                                                          |
+| Python + pandas              | Procesamiento y limpieza        | -                                                                                  |
 
 
 ## 7. Entregables
@@ -314,28 +334,40 @@ dataset/
 │   ├── goemotions_mapped.json     # Mapeo GoEmotions 28 -> 9
 │   └── labeled.json               # Con etiquetas del LLM
 ├── final/
-│   ├── dataset.json               # Dataset final entrenable (pendiente F4)
-│   ├── train.json                 # 70% entrenamiento (pendiente F4)
-│   ├── val.json                   # 15% validación (pendiente F4)
-│   └── test.json                  # 15% prueba (pendiente F4)
+│   ├── dataset.json               # Dataset final entrenable (F4: build_final_dataset)
+│   ├── quality_report.json        # Conteos por dimensión y fuente
+│   ├── train.json                 # 70% entrenamiento
+│   ├── val.json                   # 15% validación
+│   ├── test.json                  # 15% prueba
+│   └── split_meta.json            # Metadatos del split
+├── artifacts/                     # Generado: vocab.json, embedding_init.pt
+├── checkpoints/                   # Generado: best.pt por corrida de entrenamiento
 ├── scripts/
-│   ├── extract_so.py              # Extracción de SO API
-│   ├── map_emotions.py            # Mapeo GoEmotions → Synapse
-│   ├── label_with_copilot.py      # Etiquetado con Copilot
-│   └── backup/                    # Scripts operativos de respaldo
-└── README.md                      # Documentación del proceso
+│   ├── download_goemotions.py
+│   ├── map_emotions.py
+│   ├── extract_so.py
+│   ├── label_with_copilot.py
+│   ├── build_final_dataset.py    # Fusiona SO+GoE, meta ~4k–6k, dedup, split
+│   ├── split_dataset.py           # Train/val/test reproducible (también desde build_final_dataset)
+│   ├── build_vocab.py              # Vocab + matriz FastText
+│   ├── textcnn_model.py           # Definición SynapseTextCNN
+│   ├── training_labels.py         # Orden de clases por cabeza
+│   ├── train_textcnn.py         # Entrenamiento PyTorch
+│   ├── export_onnx.py            # Export ONNX
+│   └── backup/
+└── README.md
 ```
 
 ## 8. Cronograma
 
 
-| Día | Tarea                                             | Entregable                                  |
-| --- | ------------------------------------------------- | ------------------------------------------- |
-| 1   | Extraer preguntas SO ES + descargar GoEmotions ES | `raw/`                                      |
-| 1   | Mapear emociones GoEmotions → Synapse             | `processed/goemotions_mapped.json`          |
-| 2   | Etiquetar con LLM (urgencia + nivel)              | `processed/labeled.json`                    |
-| 2-3 | Data augmentation para clases minoritarias        | `final/dataset.json` *(pendiente F4)*       |
-| 3   | Filtrar duplicados + validar balance              | `final/train.json`, `val.json`, `test.json` |
+| Día | Tarea                                               | Entregable                                                     |
+| --- | --------------------------------------------------- | -------------------------------------------------------------- |
+| 1   | Extraer preguntas SO ES + descargar GoEmotions ES   | `raw/`                                                         |
+| 1   | Mapear emociones GoEmotions → Synapse               | `processed/goemotions_mapped.json`                             |
+| 2   | Etiquetar con LLM (urgencia + nivel)                | `processed/labeled.json`                                       |
+| 2-3 | Fusionar y escalar (~4k–6k), dedup, balance emoción | `final/dataset.json`, `quality_report.json`                    |
+| 3   | Split reproducible (integrado o `split_dataset.py`) | `final/train.json`, `val.json`, `test.json`, `split_meta.json` |
 
 
 **Tiempo total: 3 días** (dentro de las 2 semanas)
@@ -360,5 +392,8 @@ dataset/
 
 - GoEmotions: *"A Dataset for Fine-Grained Emotion Classification"* (Demszky et al., 2020)
 - GoEmotions Multilingual: [AnasAlokla/multilingual_go_emotions](https://huggingface.co/datasets/AnasAlokla/multilingual_go_emotions)
+- EmoEvent: [fmplaza/EmoEvent](https://huggingface.co/datasets/fmplaza/EmoEvent) (Plaza-del-Arco et al., LREC 2020)
+- SemEval-2018 Task 1: [SemEvalWorkshop/sem_eval_2018_task_1](https://huggingface.co/datasets/SemEvalWorkshop/sem_eval_2018_task_1) (Mohammad et al., 2018)
 - Stack Overflow API: Documentación oficial de Stack Exchange
 - Synthetic Data: *"Synthetic Data Generation with LLMs for Text Classification"* (arXiv:2310.07849)
+

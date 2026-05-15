@@ -31,12 +31,22 @@ dataset/
 │   ├── dataset_card.json         # Metadatos: fuentes, mapeos, versionado
 │   └── quality_report.json       # Métricas de balance y consistencia de etiquetas
 │
+├── artifacts/                    # vocab.json, embedding_init.pt (gitignored por defecto)
+├── checkpoints/                  # best.pt por corrida (gitignored por defecto)
+│
 ├── scripts/                      # Scripts de procesamiento
-│   ├── download_goemotions.py    # Descarga GoEmotions ES
-│   ├── map_emotions.py           # Mapeo de emociones (28 → 9)
-│   ├── extract_so.py             # Extracción de Stack Overflow ES
-│   ├── label_with_copilot.py     # Etiquetado con Copilot
-│   └── backup/                   # Scripts operativos de respaldo
+│   ├── download_goemotions.py
+│   ├── map_emotions.py
+│   ├── extract_so.py
+│   ├── label_with_copilot.py
+│   ├── build_final_dataset.py    # Fusiona SO+GoE, meta ~4k–6k, split
+│   ├── split_dataset.py          # Split reproducible (también llamado por build_final_dataset)
+│   ├── build_vocab.py            # Vocab + matriz FastText
+│   ├── textcnn_model.py
+│   ├── training_labels.py
+│   ├── train_textcnn.py
+│   ├── export_onnx.py
+│   └── backup/
 │
 └── README.md                     # Este archivo
 ```
@@ -143,9 +153,67 @@ pip install openai
 
 - `dataset/processed/labeled.json`
 
-### 5. Data Augmentation (En desarrollo)
+### 5. Dataset final fusionado (~4k–6k)
 
-La fase de augmentation está planificada en `docs/06-roadmap/roadmap.md` y todavía no tiene script operativo definitivo en este repositorio.
+Fusiona Stack Overflow etiquetado + GoEmotions mapeado, deduplica por texto, equilibra por `emocion` hacia una meta de filas (por defecto 5000) y escribe `dataset/final/dataset.json` más `quality_report.json`. Por defecto **también ejecuta el split** 70/15/15 (omitir con `--no-split`).
+
+```bash
+pip install scikit-learn
+python dataset/scripts/build_final_dataset.py --target-rows 5000 --seed 42
+```
+
+Opciones útiles: `--min-per-emotion 200`, `--no-augment-so` (desactiva frases de relleno SO si no las queréis), `--no-split`.
+
+**Salida:** `dataset/final/dataset.json`, `quality_report.json`, y salvo `--no-split`: `train.json`, `val.json`, `test.json`, `split_meta.json`.
+
+### 6. Split train / val / test (solo `dataset.json`)
+
+Si ya tenéis `dataset/final/dataset.json` sin split (p. ej. generado con `--no-split`):
+
+```bash
+pip install scikit-learn
+python dataset/scripts/split_dataset.py --input dataset/final/dataset.json
+```
+
+Salida: `dataset/final/train.json`, `val.json`, `test.json`, `split_meta.json`.
+
+### 7. Vocabulario y matriz FastText
+
+Descarga vectores `.vec` (ej. [FastText Spanish CC](https://fasttext.cc/docs/en/crawl-vectors.html)).
+
+```bash
+pip install torch
+python dataset/scripts/build_vocab.py \
+  --train dataset/final/train.json \
+  --fasttext /ruta/cc.es.300.vec \
+  --out-dir dataset/artifacts
+```
+
+### 8. Entrenar TextCNN (PyTorch)
+
+```bash
+pip install torch scikit-learn numpy
+python dataset/scripts/train_textcnn.py \
+  --train dataset/final/train.json \
+  --val dataset/final/val.json \
+  --vocab dataset/artifacts/vocab.json \
+  --embedding dataset/artifacts/embedding_init.pt \
+  --out-dir dataset/checkpoints/mi_corrida
+```
+
+Detalle de hiperparámetros y pérdida: [`docs/03-data-and-state/fine-tuning-process.md`](../docs/03-data-and-state/fine-tuning-process.md).
+
+### 9. Exportar ONNX
+
+```bash
+python dataset/scripts/export_onnx.py \
+  --checkpoint dataset/checkpoints/mi_corrida/best.pt \
+  --out synapse_textcnn.onnx
+```
+
+### 10. Augmentation SO
+
+El script `build_final_dataset.py` puede añadir frases cortas de contexto SO (sin cambiar etiquetas) cuando el conteo total sigue por debajo de `--target-rows`. Para desactivar: `--no-augment-so`.
 
 ## Formato del Dataset Final
 
