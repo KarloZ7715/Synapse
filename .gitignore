@@ -14,6 +14,14 @@ dist/
 .idea/
 .vscode/
 
+# Skills
+skills-lock.json
+.agents/
+
+# Dataset (artefactos generados al entrenar)
+dataset/artifacts/
+dataset/checkpoints/
+
 # Dataset (archivos grandes)
 dataset/raw/*
 dataset/processed/*

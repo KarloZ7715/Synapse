@@ -64,15 +64,15 @@ Pipeline de entrenamiento:
 1. Extracción y normalización de fuentes.
 2. Mapeo de etiquetas al esquema Synapse.
 3. Curación y balanceo del dataset entrenable.
-4. Fine-tuning de DistilBETO en clasificación multi-etiqueta (26 salidas).
-5. Exportación a ONNX y optimización para inferencia en navegador (WebGPU/WASM).
+4. Entrenamiento de **TextCNN** multi-cabeza desde cero (PyTorch) sobre FastText.
+5. Exportación a ONNX (`torch.onnx.export`) y ejecución en navegador (WebGPU/WASM).
 
 ```mermaid
 flowchart LR
     G[GoEmotions ES] --> C[Curacion y mapeo]
     S[Stack Overflow ES] --> C
     L[Etiquetado con Copilot] --> C
-    C --> T[Fine-tuning DistilBETO]
+    C --> T[Entrenar TextCNN + FastText]
     T --> O[Exportacion ONNX]
     O --> R[Runtime WebGPU/WASM]
 ```
