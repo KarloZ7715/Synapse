@@ -7,7 +7,7 @@ graph TD
     subgraph NAVEGADOR["USUARIO (Navegador)"]
         subgraph SPA["FRONTEND SPA (SolidJS)"]
             UI["UI<br/>SolidUI + Ark UI"]
-            WORKER["WEB WORKER<br/>ONNX Runtime + WebGPU<br/>DistilBETO fine-tuned<br/>Clasifica en &lt;100ms"]
+            WORKER["WEB WORKER<br/>ONNX Runtime + WebGPU<br/>TextCNN + FastText<br/>Clasifica en &lt;100ms"]
             PROMPT["Prompt Builder"]
             WORKER -->|"Metadatos JSON<br/>(nivel, urgencia, emoción, dominio)"| PROMPT
             UI --> PROMPT
@@ -58,8 +58,8 @@ graph TD
 ### 2. Clasificador ONNX (Web Worker)
 
 - **Responsabilidad:** Clasificar la pregunta en 4 dimensiones
-- **Modelo:** DistilBETO fine-tuned para clasificación multi-etiqueta
-- **Formato:** ONNX cuantizado INT8, optimizado para WebGPU
+- **Modelo:** TextCNN propia entrenada desde cero sobre embeddings FastText (español), exportada a ONNX
+- **Formato:** ONNX (FP32; cuantización INT8 opcional), optimizado para WebGPU
 - **Fallback:** WASM si WebGPU no disponible (latencia <400ms)
 
 ### 3. Backend API Gateway (FastAPI)

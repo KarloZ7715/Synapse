@@ -51,7 +51,7 @@ synapse/
 │   │   │   ├── api.ts            # Fetch wrapper + SSE
 │   │   │   └── tokenizer.ts      # Preprocesamiento para ONNX
 │   │   └── models/
-│   │       └── distilbeto.onnx   # Modelo ONNX (en CDN, no en repo)
+│   │       └── synapse-textcnn.onnx   # Modelo ONNX (en CDN, no en repo)
 │   └── tests/
 │       ├── unit/
 │       ├── e2e/

@@ -13,7 +13,7 @@ Usaremos **Cloudflare Pages para el frontend** y **Render para el backend**, con
 ### Cloudflare Pages (Frontend)
 
 1. **Ilimitado y gratuito:** Ancho de banda ilimitado, 500 builds/mes, sin costo.
-2. **300+ edge locations:** Latencia mínima global. La descarga del modelo ONNX (~30MB) se beneficia del CDN.
+2. **300+ edge locations:** Latencia mínima global. La descarga del **modelo ONNX + vocabulario** (típicamente del orden de **&lt;15 MB** en FP32 para TextCNN, según tamaño de vocabulario) se beneficia del CDN.
 3. **Git auto-deploy:** Conexión directa con GitHub. Cada push a `main` dispara build y deploy automático.
 4. **SPA nativo:** Soporte para Single Page Applications con redirects configurable.
 

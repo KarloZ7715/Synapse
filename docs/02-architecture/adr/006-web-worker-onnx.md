@@ -2,7 +2,7 @@
 
 ## Contexto
 
-La clasificación por red neuronal debe ejecutarse en el navegador sin bloquear la UI. El modelo ONNX ocupa ~30MB y la inferencia toma <100ms, pero la carga del modelo y el preprocesamiento del texto son operaciones intensivas.
+La clasificación por red neuronal debe ejecutarse en el navegador sin bloquear la UI. El modelo ONNX (TextCNN + embeddings) es más liviano que un transformer, pero la carga del grafo y la inicialización de WebGPU siguen siendo trabajo intensivo.
 
 ## Decisión
 
@@ -10,7 +10,7 @@ La inferencia ONNX se ejecutará en un **Web Worker dedicado**, comunicándose c
 
 ## Justificación
 
-1. **UI no bloqueada:** Sin Web Worker, la carga del modelo ONNX (~30MB) y la inicialización de WebGPU congelarían la UI por 1-3 segundos. El Web Worker absorbe esta carga.
+1. **UI no bloqueada:** Sin Web Worker, la descarga del ONNX, la inicialización de `InferenceSession` y WebGPU pueden congelar la UI 1–3 s. El Worker absorbe esta carga.
 2. **Aislamiento de dependencias:** ONNX Runtime Web (ort-wasm, ort-webgpu) son dependencias pesadas que no deberían estar en el bundle principal. El Worker mantiene el bundle de la UI ligero.
 3. **Comunicación simple:** El patrón request/response con `postMessage` es suficiente:
 
@@ -48,7 +48,7 @@ self.onmessage = async (event) => {
   if (event.data.type === "classify") {
     if (!session) {
       session = await ort.InferenceSession.create(
-        "/models/distilbeto-classifier.onnx",
+        "/models/synapse-textcnn.onnx",
       );
     }
     const tokens = tokenize(event.data.text);
