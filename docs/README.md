@@ -1,34 +1,45 @@
-# Synapse — Documentación del Proyecto
+# Documentación — Synapse
 
-Sistema híbrido de tutoría de programación que combina una Red Neuronal clasificadora (ONNX + WebGPU en navegador) con un LLM generativo (Groq + Gemma 4) para ofrecer respuestas personalizadas según nivel técnico, urgencia y emoción del estudiante.
+Este README organiza la carpeta `docs/` y define dónde se mantiene cada tipo de decisión del proyecto.
 
-## Estructura de Documentación
+## Objetivo
 
-| Carpeta              | Contenido                     | Descripción                          |
-| -------------------- | ----------------------------- | ------------------------------------ |
-| `01-product/`        | Discovery, requisitos, UX     | Qué se construye y por qué           |
-| `02-architecture/`   | Overview, ADRs, API contracts | Cómo se construye técnicamente       |
-| `03-data-and-state/` | Modelo de datos, estado       | Qué datos fluyen y cómo se gestionan |
-| `04-security/`       | Modelo de seguridad           | API keys, CORS, CSP, secretos        |
-| `05-project-config/` | Estructura de carpetas        | Organización del monorepo            |
-| `06-roadmap/`        | Milestones y entregables      | Plan de implementación               |
+- Centralizar requisitos, arquitectura, datos, seguridad y roadmap.
+- Evitar que el estado del proyecto se disperse entre múltiples documentos.
+- Facilitar auditorías por fase con trazabilidad clara.
 
-## Stack Tecnológico
+## Mapa de la Carpeta
 
-| Capa            | Tecnología                                   |
-| --------------- | -------------------------------------------- |
-| Frontend        | Vite + SolidJS + TypeScript (SPA)            |
-| UI              | SolidUI + Ark UI + Kobalte + Tailwind CSS v4 |
-| ML Browser      | ONNX Runtime Web + WebGPU (Web Worker)       |
-| Backend         | FastAPI + Python 3.12 + Pydantic AI          |
-| LLM Principal   | Groq (Llama 3.1 8B Instant)                  |
-| LLM Fallback    | Google Gemini (Gemma 4 26B A4B)              |
-| Deploy Frontend | Cloudflare Pages                             |
-| Deploy Backend  | Render                                       |
-| CI/CD           | GitHub Actions                               |
-| Testing         | Vitest + Playwright + Storybook              |
-| Linting         | Biome + lefthook                             |
+```mermaid
+flowchart TD
+    A[docs/] --> B[01-product]
+    A --> C[02-architecture]
+    A --> D[03-data-and-state]
+    A --> E[04-security]
+    A --> F[05-project-config]
+    A --> G[06-roadmap]
+```
 
-**Autores:** Carlos Alberto Canabal Cordero, Sebastián José Leal Flórez
 
-**Universidad de Córdoba — Materia: Simulación**
+
+## Índice y Uso
+
+
+| Carpeta              | Enfoque                                       | Documentos clave                                                            |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
+| `01-product/`        | Qué se construye y para quién                 | `requirements.md`, `ux-decisions.md`, `prompt-templates.md`, `ui-design.md` |
+| `02-architecture/`   | Cómo se implementa                            | `overview.md`, `api/contracts.md`, `adr/`                                   |
+| `03-data-and-state/` | Pipeline de datos y estado de app/modelo      | `dataset-plan.md`, `fine-tuning-process.md`, `state-model.md`               |
+| `04-security/`       | Controles de seguridad y secretos             | `security-model.md`                                                         |
+| `05-project-config/` | Estructura esperada del repositorio           | `structure.md`                                                              |
+| `06-roadmap/`        | Estado por fases, hitos y criterios de cierre | `roadmap.md`, `milestones.md`                                               |
+
+
+## Ruta de Lectura Recomendada
+
+1. `01-product/requirements.md`
+2. `02-architecture/overview.md`
+3. `02-architecture/api/contracts.md`
+4. `03-data-and-state/dataset-plan.md`
+5. `06-roadmap/roadmap.md`
+
