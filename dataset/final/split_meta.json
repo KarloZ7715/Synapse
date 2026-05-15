@@ -1,0 +1,8 @@
+{
+  "source": "/home/carloscc/Documentos/Dev/synapse/dataset/final/dataset.json",
+  "seed": 42,
+  "train": 3499,
+  "val": 750,
+  "test": 751,
+  "stratify_note": "split_dataset.split_data"
+}

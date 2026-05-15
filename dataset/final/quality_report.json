@@ -1,0 +1,115 @@
+{
+  "total_rows": 5000,
+  "target_rows": 5000,
+  "seed": 42,
+  "sources": {
+    "so_es": 250,
+    "goemotions_es": 4750
+  },
+  "counts": {
+    "nivel_tecnico": {
+      "principiante": 2006,
+      "avanzado": 121,
+      "intermedio": 2873
+    },
+    "urgencia": {
+      "alta": 1500,
+      "media": 2300,
+      "baja": 1200
+    },
+    "emocion": {
+      "ansiedad": 556,
+      "frustracion": 556,
+      "confusion": 556,
+      "neutral": 555,
+      "curiosidad": 689,
+      "abrumado": 555,
+      "motivacion": 978,
+      "desesperado": 555
+    },
+    "dominio": {
+      "backend": 71,
+      "bases_de_datos": 28,
+      "data_science": 28,
+      "devops": 28,
+      "frontend": 28,
+      "general": 4778,
+      "ingenieria_software": 9,
+      "movil": 27,
+      "seguridad": 3
+    }
+  },
+  "balance_mvp": {
+    "passes": true,
+    "checks": {
+      "nivel_avanzado_mvp_frac_ge_0.022": true,
+      "nivel_avanzado_mvp_count_ge_100": true,
+      "nivel_principiante_ge_0.22": true,
+      "urgencia_alta_ge_0.14": true,
+      "urgencia_baja_ge_0.12": true
+    },
+    "fractions": {
+      "nivel_tecnico": {
+        "principiante": 0.4012,
+        "intermedio": 0.5746,
+        "avanzado": 0.0242
+      },
+      "urgencia": {
+        "baja": 0.24,
+        "media": 0.46,
+        "alta": 0.3
+      }
+    },
+    "stretch_goals": {
+      "nivel_avanzado_frac_ge_0.12": false,
+      "note": "12 % suele requerir etiquetado LLM de nivel en GoE o más SO avanzado."
+    },
+    "infer_nivel_capacity_goe": {
+      "intermedio": 27471,
+      "principiante": 25299,
+      "avanzado": 109
+    },
+    "targets_reference": {
+      "nivel_tecnico": {
+        "principiante": 0.34,
+        "intermedio": 0.46,
+        "avanzado": 0.2
+      },
+      "urgencia": {
+        "baja": 0.24,
+        "media": 0.46,
+        "alta": 0.3
+      }
+    }
+  },
+  "sampling": {
+    "goemotions": "balanced_buckets_emocion_nivel_urgencia",
+    "targets_integer": {
+      "nivel_tecnico": {
+        "principiante": 1700,
+        "intermedio": 2300,
+        "avanzado": 1000
+      },
+      "urgencia": {
+        "baja": 1200,
+        "media": 2300,
+        "alta": 1500
+      },
+      "emocion": {
+        "frustracion": 556,
+        "confusion": 556,
+        "curiosidad": 556,
+        "ansiedad": 556,
+        "motivacion": 556,
+        "abrumado": 555,
+        "confiado": 555,
+        "desesperado": 555,
+        "neutral": 555
+      }
+    }
+  },
+  "inputs": {
+    "labeled": "/home/carloscc/Documentos/Dev/synapse/dataset/processed/labeled.json",
+    "goemotions": "/home/carloscc/Documentos/Dev/synapse/dataset/processed/goemotions_mapped.json"
+  }
+}
