@@ -58,7 +58,7 @@
   <!-- RN Info -->
   <text x="20" y="404" fill="#9898a0" font-family="JetBrains Mono" font-size="9">🧠 Info Técnica</text>
   <rect x="20" y="412" width="228" height="80" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
-  <text x="30" y="428" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Modelo</text><text x="228" y="428" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">DistilBETO</text>
+  <text x="30" y="428" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Modelo</text><text x="228" y="428" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">TextCNN</text>
   <text x="30" y="442" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Capas</text><text x="228" y="442" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">11 (67M)</text>
   <text x="30" y="456" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Input</text><text x="228" y="456" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">[1, 128]</text>
   <text x="30" y="470" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Backend</text><text x="228" y="470" text-anchor="end" fill="#22d3ee" font-family="JetBrains Mono" font-size="8">WebGPU</text>
