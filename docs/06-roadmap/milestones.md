@@ -2,7 +2,7 @@
 
 Referencia operativa alineada con `docs/06-roadmap/roadmap.md`.
 
-Última actualización: 14 mayo 2026.
+Última actualización: 15 mayo 2026.
 
 ---
 
@@ -12,7 +12,7 @@ Referencia operativa alineada con `docs/06-roadmap/roadmap.md`.
 | --- | --- |
 | Dataset base (F1-F2) | Completado |
 | Etiquetado LLM (F3) | Completado |
-| Augmentation + split (F4) | Pendiente |
+| Augmentation + dataset final 4k–6k (F4) | Completado |
 | Entrenamiento + ONNX (F5-F6) | Pendiente |
 | App (F7-F10) | Pendiente |
 | Testing + Deploy (F11-F12) | Pendiente |
@@ -36,19 +36,19 @@ DoD:
 
 ---
 
-## Milestone M2 — Dataset Final Entrenable (Pendiente)
+## Milestone M2 — Dataset Final Entrenable (Completado)
 
 Ventana objetivo: 15-17 mayo 2026  
-Estado: Pendiente
+Estado: Completado
 
 Incluye:
-- Augmentation dirigido a clases minoritarias.
-- Limpieza de duplicados.
-- Split reproducible train/val/test.
+- Ejecutar `build_final_dataset.py` (meta ~4.000–6.000 filas; default 5.000), deduplicación por texto normalizado.
+- Muestreo por `emocion` con mínimos por clase; opcional augmentation SO ligera si falta volumen.
+- Split reproducible train/val/test (70/15/15), integrado en el mismo script salvo `--no-split`.
 
 DoD:
-- `dataset/final/dataset.json`, `train.json`, `val.json`, `test.json`.
-- Balance por clases dentro de umbrales definidos.
+- `dataset/final/dataset.json`, `quality_report.json`, `train.json`, `val.json`, `test.json`, `split_meta.json`.
+- Conteo total en rango acordado y `quality_report.json` con `balance_mvp.passes: true` (MVP); `stretch_goals` opcional para ≥12 % `avanzado` vía LLM o más SO.
 
 ---
 
@@ -58,8 +58,8 @@ Ventana objetivo: 18-20 mayo 2026
 Estado: Pendiente
 
 Incluye:
-- Fine-tuning DistilBETO multi-etiqueta.
-- Exportación ONNX y validación de inferencia.
+- Entrenamiento TextCNN + FastText (multi-cabeza categórica).
+- Exportación ONNX (`torch.onnx.export`) y validación de inferencia.
 
 DoD:
 - Checkpoint final + métricas.
