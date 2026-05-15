@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 520" width="280" height="520">
+  <rect width="280" height="520" fill="#0a0a0c"/>
+  <rect x="8" y="8" width="264" height="504" rx="8" fill="#141418" stroke="#292930" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="140" y="28" text-anchor="middle" fill="#6b6b75" font-family="JetBrains Mono, monospace" font-size="9" font-weight="500">DIAGNÓSTICO</text>
+
+  <!-- Radar -->
+  <text x="20" y="48" fill="#9898a0" font-family="JetBrains Mono" font-size="9">🎯 Clasificación</text>
+  <g transform="translate(140, 110)">
+    <circle cx="0" cy="0" r="20" fill="none" stroke="#292930" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#292930" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#292930" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="0" y2="-60" stroke="#292930" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="52" y2="-30" stroke="#292930" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="52" y2="30" stroke="#292930" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="0" y2="60" stroke="#292930" stroke-width="0.5"/>
+    <!-- Polygon values: nivel 0.82, urgencia 0.45, dominio 0.93, emocion 0.71 -->
+    <polygon points="0,-49.2 23.4,-13.5 48.6,25.8 0,42.6" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="0" y="-68" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono" font-size="8">Nivel</text>
+    <text x="68" y="-34" text-anchor="start" fill="#fbbf24" font-family="JetBrains Mono" font-size="8">Urg</text>
+    <text x="68" y="42" text-anchor="start" fill="#34d399" font-family="JetBrains Mono" font-size="8">Dom</text>
+    <text x="0" y="76" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="8">Emo</text>
+  </g>
+
+  <!-- Chips -->
+  <rect x="20" y="190" width="75" height="16" rx="3" fill="rgba(96,165,250,0.15)"/>
+  <text x="57" y="201" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono" font-size="7">Principiante · 0.82</text>
+
+  <rect x="100" y="190" width="68" height="16" rx="3" fill="rgba(248,113,113,0.15)"/>
+  <text x="134" y="201" text-anchor="middle" fill="#f87171" font-family="JetBrains Mono" font-size="7">Frustración · 0.71</text>
+
+  <rect x="20" y="210" width="72" height="16" rx="3" fill="rgba(52,211,153,0.15)"/>
+  <text x="56" y="221" text-anchor="middle" fill="#34d399" font-family="JetBrains Mono" font-size="7">Algoritmos · 0.93</text>
+
+  <rect x="98" y="210" width="52" height="16" rx="3" fill="rgba(251,191,36,0.15)"/>
+  <text x="124" y="221" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="7">Alta · 0.45</text>
+
+  <!-- Metrics -->
+  <text x="20" y="252" fill="#9898a0" font-family="JetBrains Mono" font-size="9">⚡ Métricas</text>
+
+  <rect x="20" y="262" width="110" height="56" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
+  <text x="30" y="286" fill="#22d3ee" font-family="JetBrains Mono" font-size="18" font-weight="500">48<tspan font-size="10" fill="#9898a0">ms</tspan></text>
+  <text x="30" y="304" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Inferencia RN</text>
+
+  <rect x="138" y="262" width="110" height="56" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
+  <text x="148" y="286" fill="#c084fc" font-family="JetBrains Mono" font-size="18" font-weight="500">560</text>
+  <text x="148" y="304" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Tokens/s</text>
+
+  <rect x="20" y="326" width="110" height="56" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
+  <text x="30" y="350" fill="#ededef" font-family="JetBrains Mono" font-size="18" font-weight="500">1.2<tspan font-size="10" fill="#9898a0">K</tspan></text>
+  <text x="30" y="368" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Tokens totales</text>
+
+  <rect x="138" y="326" width="110" height="56" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
+  <text x="148" y="350" fill="#4ade80" font-family="JetBrains Mono" font-size="13" font-weight="500">● Groq</text>
+  <text x="148" y="368" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Proveedor activo</text>
+
+  <!-- RN Info -->
+  <text x="20" y="404" fill="#9898a0" font-family="JetBrains Mono" font-size="9">🧠 Info Técnica</text>
+  <rect x="20" y="412" width="228" height="80" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
+  <text x="30" y="428" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Modelo</text><text x="228" y="428" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">DistilBETO</text>
+  <text x="30" y="442" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Capas</text><text x="228" y="442" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">11 (67M)</text>
+  <text x="30" y="456" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Input</text><text x="228" y="456" text-anchor="end" fill="#9898a0" font-family="JetBrains Mono" font-size="8">[1, 128]</text>
+  <text x="30" y="470" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Backend</text><text x="228" y="470" text-anchor="end" fill="#22d3ee" font-family="JetBrains Mono" font-size="8">WebGPU</text>
+
+  <!-- Console button -->
+  <rect x="20" y="496" width="228" height="24" rx="4" fill="#0a0a0c" stroke="#292930" stroke-width="1"/>
+  <text x="134" y="511" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="8">💻 Consola de diagnóstico</text>
+</svg>

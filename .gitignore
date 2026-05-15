@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# IDEs
+.idea/
+.vscode/
+
+# Dataset (archivos grandes)
+dataset/raw/*
+dataset/processed/*
+!dataset/**/*.py
+!dataset/**/*.md
+
+# Agents
+DESIGN.md

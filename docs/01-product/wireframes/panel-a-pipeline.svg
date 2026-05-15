@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 420" width="220" height="420">
+  <rect width="220" height="420" fill="#0a0a0c"/>
+  <rect x="8" y="8" width="204" height="404" rx="8" fill="#141418" stroke="#292930" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="110" y="28" text-anchor="middle" fill="#6b6b75" font-family="JetBrains Mono, monospace" font-size="9" font-weight="500">PIPELINE</text>
+
+  <!-- Node 1: Input (done) -->
+  <circle cx="110" cy="55" r="14" fill="#141418" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="110" y="59" text-anchor="middle" fill="#4ade80" font-family="JetBrains Mono" font-size="10">&#x2713;</text>
+  <text x="110" y="80" text-anchor="middle" fill="#4ade80" font-family="JetBrains Mono" font-size="8" opacity="0.8">Input</text>
+
+  <!-- Fiber 1-2 -->
+  <line x1="110" y1="69" x2="110" y2="91" stroke="#4ade80" stroke-width="1" opacity="0.5"/>
+
+  <!-- Node 2: Tokenizer (active) -->
+  <circle cx="110" cy="105" r="14" fill="#141418" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="110" y="109" text-anchor="middle" fill="#22d3ee" font-family="JetBrains Mono" font-size="10">T</text>
+  <text x="110" y="130" text-anchor="middle" fill="#22d3ee" font-family="JetBrains Mono" font-size="8">Tokenizer</text>
+
+  <!-- Fiber 2-3 -->
+  <line x1="110" y1="119" x2="110" y2="141" stroke="#22d3ee" stroke-width="1" stroke-dasharray="3 3" opacity="0.8"/>
+
+  <!-- Node 3: RN (pending, bigger) -->
+  <circle cx="110" cy="158" r="18" fill="#141418" stroke="#292930" stroke-width="1.5"/>
+  <text x="110" y="163" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="12">&#x1f9e0;</text>
+  <text x="110" y="186" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="8" opacity="0.5">Red Neuronal</text>
+
+  <!-- Fiber 3-4 -->
+  <line x1="110" y1="176" x2="110" y2="198" stroke="#292930" stroke-width="1"/>
+
+  <!-- Node 4: Clasif -->
+  <circle cx="110" cy="212" r="14" fill="#141418" stroke="#292930" stroke-width="1.5"/>
+  <g opacity="0.3">
+    <circle cx="106" cy="210" r="2" fill="#60a5fa"/>
+    <circle cx="114" cy="210" r="2" fill="#fbbf24"/>
+    <circle cx="106" cy="216" r="2" fill="#a78bfa"/>
+    <circle cx="114" cy="216" r="2" fill="#34d399"/>
+  </g>
+  <text x="110" y="237" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="8" opacity="0.5">Clasif</text>
+
+  <!-- Fiber 4-5 -->
+  <line x1="110" y1="226" x2="110" y2="248" stroke="#292930" stroke-width="1"/>
+
+  <!-- Node 5: Prompt -->
+  <circle cx="110" cy="262" r="14" fill="#141418" stroke="#292930" stroke-width="1.5"/>
+  <text x="110" y="266" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="10" opacity="0.3">P</text>
+  <text x="110" y="287" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="8" opacity="0.5">Prompt</text>
+
+  <!-- Fiber 5-6 -->
+  <line x1="110" y1="276" x2="110" y2="298" stroke="#292930" stroke-width="1"/>
+
+  <!-- Node 6: LLM -->
+  <circle cx="110" cy="312" r="14" fill="#141418" stroke="#292930" stroke-width="1.5"/>
+  <text x="110" y="316" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="10" opacity="0.3">L</text>
+  <text x="110" y="337" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="8" opacity="0.5">LLM</text>
+
+  <!-- Info box -->
+  <rect x="20" y="355" width="180" height="48" rx="4" fill="#141418" stroke="#292930" stroke-width="1"/>
+  <text x="30" y="370" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">WebGPU</text>
+  <text x="170" y="370" text-anchor="end" fill="#22d3ee" font-family="JetBrains Mono" font-size="8">12ms</text>
+  <text x="30" y="385" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Groq</text>
+  <text x="170" y="385" text-anchor="end" fill="#4ade80" font-family="JetBrains Mono" font-size="8">560 t/s</text>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" width="500" height="380">
+  <rect width="500" height="380" fill="#0a0a0c"/>
+
+  <!-- User message -->
+  <rect x="180" y="16" width="304" height="48" rx="6" fill="#1c1c22"/>
+  <line x1="180" y1="16" x2="180" y2="64" stroke="#22d3ee" stroke-width="2"/>
+  <text x="192" y="36" fill="#ededef" font-family="Inter, system-ui" font-size="12">No entiendo nada de recursividad</text>
+  <text x="192" y="54" fill="#6b6b75" font-family="JetBrains Mono" font-size="8">Tú · 12:05</text>
+
+  <!-- Synapse message -->
+  <rect x="16" y="80" width="420" height="168" rx="6" fill="#141418"/>
+  <line x1="16" y1="80" x2="16" y2="248" stroke="#f87171" stroke-width="2"/>
+  <text x="32" y="100" fill="#c084fc" font-family="JetBrains Mono" font-size="10" font-weight="700">🧠 Synapse</text>
+  <text x="380" y="100" text-anchor="end" fill="#6b6b75" font-family="JetBrains Mono" font-size="9">87%</text>
+
+  <text x="32" y="124" fill="#ededef" font-family="Inter" font-size="13">¡Tranquilo! La recursividad es cuando una</text>
+  <text x="32" y="142" fill="#ededef" font-family="Inter" font-size="13">función se llama a sí misma. Imagina una</text>
+  <text x="32" y="160" fill="#ededef" font-family="Inter" font-size="13">muñeca rusa: abres una, hay otra dentro...</text>
+  <text x="32" y="178" fill="#ededef" font-family="Inter" font-size="13">Necesitas un <tspan fill="#22d3ee" font-family="JetBrains Mono">caso base</tspan> y un <tspan fill="#22d3ee" font-family="JetBrains Mono">caso recursivo</tspan>.</text>
+  <text x="32" y="196" fill="#22d3ee" font-family="Inter" font-size="13" class="cursor-blink">█</text>
+
+  <!-- Chips -->
+  <rect x="32" y="212" width="72" height="18" rx="3" fill="rgba(96,165,250,0.15)"/>
+  <text x="68" y="224" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono" font-size="8">Principiante</text>
+
+  <rect x="112" y="212" width="72" height="18" rx="3" fill="rgba(248,113,113,0.15)"/>
+  <text x="148" y="224" text-anchor="middle" fill="#f87171" font-family="JetBrains Mono" font-size="8">Frustración</text>
+
+  <rect x="192" y="212" width="72" height="18" rx="3" fill="rgba(52,211,153,0.15)"/>
+  <text x="228" y="224" text-anchor="middle" fill="#34d399" font-family="JetBrains Mono" font-size="8">Algoritmos</text>
+
+  <rect x="272" y="212" width="50" height="18" rx="3" fill="rgba(251,191,36,0.15)"/>
+  <text x="297" y="224" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="8">Alta</text>
+
+  <!-- Input box -->
+  <rect x="16" y="268" width="468" height="88" rx="8" fill="#1c1c22"/>
+  <text x="32" y="292" fill="#6b6b75" font-family="Inter" font-size="13">Escribe tu duda de programación...</text>
+
+  <!-- Input footer -->
+  <text x="32" y="340" fill="#6b6b75" font-family="JetBrains Mono" font-size="9">📎 Adjuntar código</text>
+
+  <rect x="324" y="328" width="110" height="20" rx="4" fill="#141418" stroke="#292930" stroke-width="1"/>
+  <text x="379" y="341" text-anchor="middle" fill="#9898a0" font-family="JetBrains Mono" font-size="8">Groq · Llama 3.1</text>
+
+  <circle cx="458" cy="338" r="12" fill="#22d3ee"/>
+  <text x="458" y="342" text-anchor="middle" fill="#0a0a0c" font-family="Inter" font-size="10" font-weight="700">➤</text>
+</svg>
