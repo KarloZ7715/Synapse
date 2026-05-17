@@ -17,7 +17,7 @@ Autores: Carlos Alberto Canabal Cordero, Sebastián José Leal Flórez.
 | 4    | Dataset final (~10k-12k) + split | Completada | 100%     |
 | 5    | Entrenamiento RN (TextCNN)       | Completada | 100%     |
 | 6    | Exportación ONNX                 | Completada | 100%     |
-| 7    | Frontend - Pipeline              | Pendiente  | 0%       |
+| 7    | Frontend - Pipeline              | Completada | 100%     |
 | 8    | Frontend - Chat UI               | Pendiente  | 0%       |
 | 9    | Backend - API Gateway            | Pendiente  | 0%       |
 | 10   | Integración E2E                  | Pendiente  | 0%       |
@@ -236,16 +236,16 @@ Criterios de salida cumplidos:
 
 ## Fase 7 — Frontend Pipeline
 
-Estado: **Pendiente**  
+Estado: **Completada**  
 Ventana objetivo: **21-22 mayo 2026**
 
 Objetivo:
 
-- Visualizar pipeline usuario → RN → LLM.
+- Visualizar pipeline usuario → RN → metadatos (base para LLM en fases posteriores).
 
 Actividades:
 
-- Integrar worker ONNX.
+- Integrar worker ONNX (`frontend/` + `onnxruntime-web`).
 - Renderizar metadata (`nivel`, `urgencia`, `emoción`, `dominio`).
 - Mostrar estado de carga/inferencia.
 
@@ -253,6 +253,11 @@ Criterios de salida:
 
 - Clasificación visible y estable en UI.
 - Sin bloqueo del hilo principal.
+
+Entregables:
+
+- SPA SolidJS en `frontend/` (Vite, TypeScript, Tailwind v4, Biome, Vitest, Playwright smoke).
+- Script `pnpm sync:model` para copiar `synapse_textcnn.onnx` y `vocab.json` a `frontend/public/models/`.
 
 ---
 

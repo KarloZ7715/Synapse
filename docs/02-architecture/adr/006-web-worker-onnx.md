@@ -52,7 +52,7 @@ self.onmessage = async (event) => {
       );
     }
     const tokens = tokenize(event.data.text);
-    const results = await session.run({ input: tokens });
+    const results = await session.run({ input_ids: tokens });
     const metadata = postProcess(results);
     self.postMessage(metadata);
   }

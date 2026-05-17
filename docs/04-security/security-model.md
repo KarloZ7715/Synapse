@@ -76,7 +76,7 @@
 
 ```yaml
 # Cloudflare Pages _headers
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' https://synapse-api.onrender.com; style-src 'self' 'unsafe-inline'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' https://cdn.jsdelivr.net https://synapse-api.onrender.com; style-src 'self' 'unsafe-inline'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin

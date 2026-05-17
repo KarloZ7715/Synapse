@@ -25,12 +25,14 @@ El sistema debe permitir al usuario escribir una pregunta o duda sobre programac
 
 El sistema debe analizar la pregunta del usuario usando una RN que corre en el navegador (ONNX Runtime Web + WebGPU en un Web Worker) y clasificarla en las siguientes dimensiones:
 
-| Dimensión         | Etiquetas                                                                                                                                           | Descripción                                      |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| **Nivel técnico** | `principiante`, `intermedio`, `avanzado`                                                                                                            | Nivel de conocimiento en el tema preguntado      |
-| **Urgencia**      | `baja`, `media`, `alta`                                                                                                                             | Qué tan urgente es la consulta para el usuario   |
-| **Emoción**       | `frustracion`, `confusion`, `curiosidad`, `ansiedad`, `motivacion`, `abrumado`, `confiado`, `desesperado`, `neutral`                                | Estado emocional detectado (taxonomía educativa) |
-| **Dominio**       | `frontend`, `backend`, `algoritmos`, `bases_de_datos`, `devops`, `movil`, `data_science`, `seguridad`, `sistemas`, `ingenieria_software`, `general` | Área de programación de la consulta              |
+| Dimensión         | Etiquetas                                                                                                                                           | Descripción                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Nivel técnico** | `principiante`, `intermedio`, `avanzado`                                                                                                            | Nivel de conocimiento en el tema preguntado           |
+| **Urgencia**      | `baja`, `media`, `alta`                                                                                                                             | Qué tan urgente es la consulta para el usuario        |
+| **Emoción**       | `frustracion`, `confusion`, `curiosidad`, `ansiedad`, `motivacion`, `abrumado`, `confiado`, `desesperado`, `neutral`                                | Estado emocional detectado (taxonomía educativa)      |
+| **Dominio**       | `backend`, `frontend`, `bases_de_datos`, `movil`, `devops`, `data_science`, `sistemas_seguridad`, `general` (taxonomía del **TextCNN ONNX** actual) | Área técnica colapsada para el clasificador entrenado |
+
+> **Nota:** La tabla extendida de dominios más abajo describe una taxonomía de producto de referencia; el modelo exportado y el frontend usan solo las **8** etiquetas anteriores. Ampliación futura = reentrenamiento + actualización de contratos.
 
 **Descripción expandida de etiquetas:**
 
@@ -48,7 +50,7 @@ El sistema debe analizar la pregunta del usuario usando una RN que corre en el n
 | `desesperado` | Bloqueado, no avanza, sensación de no poder         | "Llevo 3 días con este bug, ya no sé qué más intentar"      |
 | `neutral`     | Sin carga emocional detectable                      | "¿Cómo se hace un JOIN en SQL?"                             |
 
-### Dominios (taxonomía técnica expandida)
+### Dominios (referencia de producto; el modelo ONNX actual usa 8 etiquetas — ver RF-02)
 
 | Etiqueta              | Descripción                           | Temas incluidos                                                 |
 | --------------------- | ------------------------------------- | --------------------------------------------------------------- |
@@ -81,7 +83,7 @@ La RN debe producir un objeto JSON estructurado con los metadatos de clasificaci
   "nivel_tecnico": "principiante",
   "urgencia": "alta",
   "emocion": "frustracion",
-  "dominio": "algoritmos",
+  "dominio": "backend",
   "confianza": 0.87
 }
 ```

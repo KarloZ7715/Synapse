@@ -24,6 +24,7 @@ Los asistentes de programación suelen responder sin contexto pedagógico. Synap
 ## Qué hace la aplicación
 
 Flujo end-to-end:
+
 1. El usuario envía una pregunta técnica en español.
 2. El clasificador local infiere metadatos contextuales.
 3. El backend construye un prompt enriquecido con ese contexto.
@@ -46,21 +47,24 @@ flowchart LR
 ## Modelo de clasificación
 
 Synapse clasifica cada consulta en 4 dimensiones:
+
 - `nivel_tecnico`: `principiante`, `intermedio`, `avanzado`
 - `urgencia`: `baja`, `media`, `alta`
 - `emocion`: 9 etiquetas pedagógicas (incluye `frustracion`, `confusion`, `ansiedad`, `desesperado`, `neutral`)
-- `dominio`: 11 áreas técnicas (incluye `frontend`, `backend`, `algoritmos`, `bases_de_datos`, `devops`, `seguridad`)
+- `dominio`: 8 etiquetas del **TextCNN ONNX** actual (`backend`, `frontend`, `bases_de_datos`, `movil`, `devops`, `data_science`, `sistemas_seguridad`, `general`; ver `neural_network/scripts/training_labels.py`)
 
 Estas señales determinan cómo se formula la respuesta: profundidad técnica, tono, estructura y enfoque de resolución.
 
 ## Datos y entrenamiento
 
 El proceso documentado de datos/modelado es híbrido:
+
 - GoEmotions ES como base emocional en español.
 - Stack Overflow ES como fuente de preguntas reales de programación.
 - Etiquetado asistido con Copilot (proxy OpenAI-compatible) para dimensiones faltantes.
 
 Pipeline de entrenamiento:
+
 1. Extracción y normalización de fuentes.
 2. Mapeo de etiquetas al esquema Synapse.
 3. Curación y balanceo del dataset entrenable.
@@ -80,12 +84,14 @@ flowchart LR
 ## Arquitectura y operación
 
 Arquitectura objetivo:
+
 - Frontend SPA (SolidJS + TypeScript).
 - Clasificación local en Web Worker con ONNX Runtime Web.
 - Backend API (FastAPI) para orquestar prompts, streaming y fallback.
 - Proveedor principal LLM + proveedor de respaldo con circuit breaker.
 
 Principio de estado:
+
 - Infraestructura stateless.
 - Historial conversacional en memoria de sesión (ventana corta).
 - Sin base de datos transaccional para la operación principal.
@@ -93,10 +99,12 @@ Principio de estado:
 ## API del sistema
 
 Endpoints principales:
+
 - `POST /api/chat`: recibe pregunta + metadatos + historial y responde vía `text/event-stream`.
 - `GET /health`: salud operativa para monitoreo.
 
 El contrato de `POST /api/chat` contempla:
+
 - entrada validada (pregunta, metadata, historial),
 - tokens SSE para render incremental,
 - evento final de uso (proveedor, latencia, tokens),
@@ -105,6 +113,7 @@ El contrato de `POST /api/chat` contempla:
 ## Seguridad y privacidad
 
 Controles clave documentados:
+
 - Secrets solo en backend (`.env` en dev, variables de entorno en deploy).
 - CORS restrictivo al origen permitido.
 - Rate limiting por IP y límites globales.
@@ -112,6 +121,7 @@ Controles clave documentados:
 - Headers de seguridad (CSP, HSTS, X-Frame-Options, etc.).
 
 Privacidad por diseño:
+
 - Sin cuentas de usuario.
 - Sin cookies de tracking.
 - Sin persistencia de conversaciones entre sesiones.
@@ -119,6 +129,7 @@ Privacidad por diseño:
 ## Objetivos no funcionales
 
 Objetivos operativos definidos en requisitos:
+
 - Clasificación local: <100 ms.
 - Primer token de respuesta: <2 s.
 - Tiempo total de respuesta: <5 s.
@@ -149,7 +160,12 @@ synapse/
 ├── frontend/
 │   ├── src/
 │   ├── public/
-│   └── tests/
+│   ├── tests/
+│   ├── scripts/sync-model-artifacts.mjs
+│   ├── vite.config.ts
+│   ├── vitest.config.ts
+│   ├── playwright.config.ts
+│   └── package.json
 ├── backend/
 │   ├── app/
 │   └── tests/
@@ -164,12 +180,13 @@ synapse/
 - Contratos API: [docs/02-architecture/api/contracts.md](docs/02-architecture/api/contracts.md)
 - Datos y estado: [docs/03-data-and-state/](docs/03-data-and-state/)
 - Seguridad: [docs/04-security/security-model.md](docs/04-security/security-model.md)
-- Estructura objetivo: [docs/05-project-config/structure.md](docs/05-project-config/structure.md)
+- Estructura y frontend: [docs/05-project-config/structure.md](docs/05-project-config/structure.md), [frontend/README.md](frontend/README.md)
 - Dataset: [dataset/README.md](dataset/README.md)
 
 ## Roadmap
 
 Plan de fases e hitos:
+
 - [docs/06-roadmap/roadmap.md](docs/06-roadmap/roadmap.md)
 - [docs/06-roadmap/milestones.md](docs/06-roadmap/milestones.md)
 

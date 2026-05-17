@@ -20,38 +20,38 @@ synapse/
 │   ├── pnpm-lock.yaml
 │   ├── tsconfig.json
 │   ├── vite.config.ts
+│   ├── vitest.config.ts
+│   ├── playwright.config.ts
 │   ├── biome.json
-│   ├── lefthook.yml
-│   ├── .env.example
+│   ├── README.md
+│   ├── scripts/
+│   │   └── sync-model-artifacts.mjs  # Copia ONNX + vocab a public/models/
 │   ├── public/
-│   │   ├── favicon.ico
-│   │   ├── robots.txt
-│   │   └── _headers              # Cloudflare Pages security headers
+│   │   ├── _headers              # Cloudflare Pages security headers
+│   │   └── models/               # synapse_textcnn.onnx + vocab.json (post sync:model)
 │   ├── src/
-│   │   ├── main.tsx              # Entry point
-│   │   ├── App.tsx               # Root component
-│   │   ├── index.css             # Tailwind imports
+│   │   ├── main.tsx
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   ├── config/model.ts
 │   │   ├── components/
-│   │   │   ├── ui/               # SolidUI components
-│   │   │   ├── ChatInput.tsx
-│   │   │   ├── ChatPanel.tsx
-│   │   │   ├── MetadataPanel.tsx
-│   │   │   └── ThemeToggle.tsx
+│   │   │   ├── QuestionComposer.tsx
+│   │   │   ├── PipelinePanel.tsx
+│   │   │   └── MetadataPanel.tsx
 │   │   ├── workers/
-│   │   │   └── classifier.worker.ts  # ONNX Runtime Web Worker
+│   │   │   └── classifier.worker.ts
 │   │   ├── hooks/
-│   │   │   ├── useChat.ts
-│   │   │   ├── useClassifier.ts
-│   │   │   └── useTheme.ts
+│   │   │   └── useClassifier.ts
 │   │   ├── store/
-│   │   │   └── conversation.ts   # Estado global (createStore)
+│   │   │   └── conversation.ts
 │   │   ├── types/
-│   │   │   └── index.ts          # Tipos compartidos
-│   │   ├── utils/
-│   │   │   ├── api.ts            # Fetch wrapper + SSE
-│   │   │   └── tokenizer.ts      # Preprocesamiento para ONNX
-│   │   └── models/
-│   │       └── synapse-textcnn.onnx   # Modelo ONNX
+│   │   │   ├── classifier.ts
+│   │   │   ├── chat.ts
+│   │   │   └── worker.ts
+│   │   └── utils/
+│   │       ├── tokenizer.ts
+│   │       ├── softmax.ts
+│   │       └── postprocess.ts
 │   └── tests/
 │       ├── unit/
 │       ├── e2e/
@@ -216,3 +216,4 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload  # http://localhost:8000
 ```
+

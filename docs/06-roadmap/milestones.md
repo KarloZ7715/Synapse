@@ -9,15 +9,15 @@ Referencia operativa alineada con `docs/06-roadmap/roadmap.md`.
 ## Snapshot de Avance
 
 
-| Bloque                                     | Estado     |
-| ------------------------------------------ | ---------- |
-| Dataset base (F1-F2)                       | Completado |
-| Etiquetado LLM (F3)                        | Completado |
-| Augmentation + dataset final ~10k-12k (F4) | Completado |
-| Entrenamiento TextCNN (F5)                 | Completado |
-| Exportación ONNX (F6)                      | Completado |
-| App (F7-F10)                               | Pendiente  |
-| Testing + Deploy (F11-F12)                 | Pendiente  |
+| Bloque                                     | Estado                                 |
+| ------------------------------------------ | -------------------------------------- |
+| Dataset base (F1-F2)                       | Completado                             |
+| Etiquetado LLM (F3)                        | Completado                             |
+| Augmentation + dataset final ~10k-12k (F4) | Completado                             |
+| Entrenamiento TextCNN (F5)                 | Completado                             |
+| Exportación ONNX (F6)                      | Completado                             |
+| App (F7-F10)                               | En curso (F7 listo; F8–F10 pendientes) |
+| Testing + Deploy (F11-F12)                 | Pendiente                              |
 
 
 ---
@@ -62,7 +62,7 @@ DoD:
 ## Milestone M3 — Modelo ONNX Validado
 
 Ventana objetivo: 18-20 mayo 2026  
-Estado: **Completado** — F5 + export ONNX + verificación de paridad ORT CPU (`verify_onnx.py`).
+Estado: **Completado**
 
 ### Parte 1: Entrenamiento TextCNN (COMPLETADA)
 
@@ -98,6 +98,7 @@ DoD Parte 2 (cierre M3 / F6):
 Seguimiento (Fase 7 — worker frontend):
 
 - `onnxruntime-web` (WASM/WebGPU), latencia en cliente, INT8 opcional.
+- **Implementado:** `frontend/` (worker + UI pipeline). Pendiente: optimización INT8 y métricas de latencia publicadas.
 
 ---
 

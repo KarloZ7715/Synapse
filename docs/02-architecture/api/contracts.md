@@ -1,5 +1,7 @@
 # API Contracts — Synapse
 
+> **Alineación con el modelo TextCNN:** el clasificador ONNX actual expone **8** etiquetas de `dominio` (ver `neural_network/scripts/training_labels.py` y `frontend/src/types/classifier.ts`). Los contratos de request deben usar exactamente ese literal union hasta que un reentrenamiento amplíe la taxonomía.
+
 ## Base URL
 
 - **Desarrollo:** `http://localhost:8000`
@@ -20,7 +22,7 @@ Envía la pregunta del usuario con metadatos de clasificación y recibe la respu
     "nivel_tecnico": "principiante",
     "urgencia": "alta",
     "emocion": "frustracion",
-    "dominio": "algoritmos",
+    "dominio": "backend",
     "confianza": 0.87
   },
   "historial": [
@@ -102,17 +104,15 @@ interface ClassificationMetadata {
     | "confiado"
     | "desesperado"
     | "neutral";
+  /** Cabezal `dominio` del ONNX actual (8 clases). */
   dominio:
-    | "frontend"
     | "backend"
-    | "algoritmos"
+    | "frontend"
     | "bases_de_datos"
-    | "devops"
     | "movil"
+    | "devops"
     | "data_science"
-    | "seguridad"
-    | "sistemas"
-    | "ingenieria_software"
+    | "sistemas_seguridad"
     | "general";
   confianza: number; // 0-1
 }
@@ -171,16 +171,13 @@ class ClassificationMetadata(BaseModel):
         "neutral",
     ]
     dominio: Literal[
-        "frontend",
         "backend",
-        "algoritmos",
+        "frontend",
         "bases_de_datos",
-        "devops",
         "movil",
+        "devops",
         "data_science",
-        "seguridad",
-        "sistemas",
-        "ingenieria_software",
+        "sistemas_seguridad",
         "general",
     ]
     confianza: float = Field(ge=0.0, le=1.0)
@@ -205,3 +202,4 @@ class ChatRequest(BaseModel):
 
 - API v1: ruta base sin prefijo (`/api/chat`)
 - Futuras versiones: `/api/v2/chat`
+

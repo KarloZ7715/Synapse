@@ -79,7 +79,7 @@ graph TD
 1. Usuario escribe: "No entiendo nada de recursividad"
 2. Frontend envía texto al Web Worker (postMessage)
 3. Web Worker ejecuta ONNX Runtime Web + WebGPU
-4. Clasificación: `{nivel_tecnico: "principiante", urgencia: "alta", emocion: "frustracion", dominio: "algoritmos"}`
+4. Clasificación: `{nivel_tecnico: "principiante", urgencia: "alta", emocion: "frustracion", dominio: "backend"}`
 5. Frontend envía POST /api/chat con `{pregunta, metadata}`
 6. Backend chequea caché LRU → miss
 7. Backend construye prompt enriquecido:

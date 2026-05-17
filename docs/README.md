@@ -29,6 +29,7 @@ flowchart TD
 | `03-data-and-state/` | Pipeline de datos y estado de app/modelo      | `dataset-plan.md`, `fine-tuning-process.md` (TextCNN + DoD)                 |
 | `04-security/`       | Controles de seguridad y secretos             | `security-model.md`                                                         |
 | `05-project-config/` | Estructura esperada del repositorio           | `structure.md`                                                              |
+| `frontend/`          | SPA local                                     | `../frontend/README.md`                                                     |
 | `06-roadmap/`        | Estado por fases, hitos y criterios de cierre | `roadmap.md`, `milestones.md`                                               |
 
 ## Ruta de Lectura Recomendada

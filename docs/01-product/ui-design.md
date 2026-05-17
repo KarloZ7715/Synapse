@@ -164,8 +164,8 @@ Sección Accordion expandible con tabs internos: "RN" y "LLM".
 | ------------ | ----------------------------------------------- |
 | Modelo       | TextCNN + FastText (entrenada desde cero)       |
 | Parámetros   | ~0.3–2M entrenables (embed congelado al inicio) |
-| Input shape  | `[1, 96]` int64 (`input_ids`)                   |
-| Output shape | 4× logits `[1,3]`, `[1,3]`, `[1,9]`, `[1,11]`   |
+| Input shape  | `[1, 160]` int64 (`input_ids`)                  |
+| Output shape | 4× logits `[1,3]`, `[1,3]`, `[1,9]`, `[1,8]`   |
 | Precisión    | FP32 (INT8 opcional)                            |
 | Tamaño       | típ. < 15 MB ONNX FP32                          |
 | Backend      | WebGPU / WASM                                   |
