@@ -20,20 +20,16 @@ flowchart TD
     A --> G[06-roadmap]
 ```
 
-
-
 ## Índice y Uso
-
 
 | Carpeta              | Enfoque                                       | Documentos clave                                                            |
 | -------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
 | `01-product/`        | Qué se construye y para quién                 | `requirements.md`, `ux-decisions.md`, `prompt-templates.md`, `ui-design.md` |
 | `02-architecture/`   | Cómo se implementa                            | `overview.md`, `api/contracts.md`, `adr/`                                   |
-| `03-data-and-state/` | Pipeline de datos y estado de app/modelo      | `dataset-plan.md`, `fine-tuning-process.md`, `state-model.md`               |
+| `03-data-and-state/` | Pipeline de datos y estado de app/modelo      | `dataset-plan.md`, `fine-tuning-process.md` (TextCNN + DoD)                 |
 | `04-security/`       | Controles de seguridad y secretos             | `security-model.md`                                                         |
 | `05-project-config/` | Estructura esperada del repositorio           | `structure.md`                                                              |
 | `06-roadmap/`        | Estado por fases, hitos y criterios de cierre | `roadmap.md`, `milestones.md`                                               |
-
 
 ## Ruta de Lectura Recomendada
 
@@ -42,4 +38,3 @@ flowchart TD
 3. `02-architecture/api/contracts.md`
 4. `03-data-and-state/dataset-plan.md`
 5. `06-roadmap/roadmap.md`
-

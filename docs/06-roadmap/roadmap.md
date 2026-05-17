@@ -2,45 +2,43 @@
 
 Proyecto de simulación. Universidad de Córdoba.  
 Autores: Carlos Alberto Canabal Cordero, Sebastián José Leal Flórez.  
-Última actualización: 15 mayo 2026.
+Última actualización: 17 mayo 2026.
 
 ---
 
 ## Estado General
 
 
-| Fase | Descripción                    | Estado     | Progreso |
-| ---- | ------------------------------ | ---------- | -------- |
-| 1    | Dataset - GoEmotions ES        | Completada | 100%     |
-| 2    | Dataset - Stack Overflow ES    | Completada | 100%     |
-| 3    | Dataset - Etiquetado LLM       | Completada | 100%     |
-| 4    | Dataset final (~4k–6k) + split | Completada | 100%     |
-| 5    | Entrenamiento RN (TextCNN)     | Pendiente  | 0%       |
-| 6    | Exportación ONNX               | Pendiente  | 0%       |
-| 7    | Frontend - Pipeline            | Pendiente  | 0%       |
-| 8    | Frontend - Chat UI             | Pendiente  | 0%       |
-| 9    | Backend - API Gateway          | Pendiente  | 0%       |
-| 10   | Integración E2E                | Pendiente  | 0%       |
-| 11   | Testing                        | Pendiente  | 0%       |
-| 12   | Deploy                         | Pendiente  | 0%       |
+| Fase | Descripción                      | Estado     | Progreso |
+| ---- | -------------------------------- | ---------- | -------- |
+| 1    | Dataset - GoEmotions ES          | Completada | 100%     |
+| 2    | Dataset - Stack Overflow ES      | Completada | 100%     |
+| 3    | Dataset - Etiquetado LLM         | Completada | 100%     |
+| 4    | Dataset final (~10k-12k) + split | Completada | 100%     |
+| 5    | Entrenamiento RN (TextCNN)       | Completada | 100%     |
+| 6    | Exportación ONNX                 | Completada | 100%     |
+| 7    | Frontend - Pipeline              | Pendiente  | 0%       |
+| 8    | Frontend - Chat UI               | Pendiente  | 0%       |
+| 9    | Backend - API Gateway            | Pendiente  | 0%       |
+| 10   | Integración E2E                  | Pendiente  | 0%       |
+| 11   | Testing                          | Pendiente  | 0%       |
+| 12   | Deploy                           | Pendiente  | 0%       |
 
-
-Progreso total: **4/12 fases (33%)**.
 
 ---
 
 ## Cronograma
 
-Semana 1 (14-20 mayo 2026): Fases 1-6  
+Semana 1 (14-20 mayo 2026): Fases 1-6
 
-- Cerrar dataset final para entrenamiento  
+- Cerrar dataset final para entrenamiento
 - Entrenar clasificador TextCNN multi-cabeza
 - Exportar y validar ONNX
 
-Semana 2 (21-28 mayo 2026): Fases 7-12  
+Semana 2 (21-28 mayo 2026): Fases 7-12
 
-- Frontend + backend funcionales  
-- Integración completa con streaming  
+- Frontend + backend funcionales
+- Integración completa con streaming
 - Testing, deploy y preparación de sustentación
 
 ---
@@ -126,9 +124,7 @@ Gate de calidad Fase 3:
 
 ---
 
-## Fases Pendientes (Plan Detallado)
-
-## Fase 4 — Dataset final (~4k–6k) + split
+## Fase 4 — Dataset final (~10k-12k) + split
 
 Estado: **Completada**  
 Fecha: **15 mayo 2026**  
@@ -136,7 +132,7 @@ Ventana objetivo: **15-17 mayo 2026**
 
 Objetivo:
 
-- **Meta de tamaño:** ~**4.000–6.000** ejemplos reproducibles (default del script: 5.000).
+- **Meta de tamaño:** ~**10.000 - 12.000** ejemplos reproducibles (default del script: 12.000).
 - Aumentar cobertura de clases minoritarias (especialmente `emocion` y `avanzado` / `alta` cuando aplique).
 - Construir dataset final entrenable y reproducible.
 
@@ -147,13 +143,13 @@ Entradas:
 
 Actividades:
 
-- Ejecutar `python dataset/scripts/build_final_dataset.py --target-rows 5000 --seed 42` (ajustar `--min-per-emotion` si hace falta).
+- Ejecutar `python dataset/scripts/build_final_dataset.py --target-rows 12000 --seed 42` (ajustar `--min-per-emotion` si hace falta).
 - **Emoción en SO:** heurística por palabras clave en el script; opcionalmente re-etiquetar emoción con LLM y volver a fusionar.
 - Filtrar duplicados exactos por texto normalizado (título+cuerpo / texto GoEmotions).
 - Verificar balance en `quality_report.json` (`balance_mvp.passes`; el ideal ≥12 % `avanzado` suele requerir LLM sobre GoE — ver `stretch_goals`).
 - Split `train/val/test` (70/15/15) integrado en el mismo script (omitir con `--no-split` si solo queréis `dataset.json`).
 
-Resultado (corrida de referencia `seed=42`, N=5000):
+Resultado (corrida de referencia `seed=42`, N=12000):
 
 - `quality_report.json` con `balance_mvp.passes: true` (umbrales MVP nivel/urgencia).
 - `infer_nivel_capacity_goe` documenta el techo de filas `avanzado` inferibles solo con heurística sobre GoEmotions.
@@ -175,62 +171,66 @@ Criterios de salida:
 
 ## Fase 5 — Entrenamiento RN (TextCNN)
 
-Estado: **Pendiente**  
-Ventana objetivo: **18-19 mayo 2026**
+Estado: **Completada**  
+Fecha: **17 mayo 2026**
 
-Objetivo:
+Resultado:
 
-- Entrenar clasificador **TextCNN** propio (multi-task single-label) para las 4 dimensiones.
+- Clasificador **TextCNN** multi-task single-label entrenado y validado en las 4 dimensiones.
+- Artefactos en `neural_network/notebook/data/checkpoints/textcnn_run/`: checkpoint óptimo (`best.pt`), métricas completas (`history.json`, `test_metrics.json`, `val_source_metrics.json`), calibración post-hoc (`posthoc_calibration.json`), línea base mayoría (`majority_baselines.json`).
+- DoD Gate: `neural_network/notebook/data/checkpoints/textcnn_run/dod_report.json` con `all_pass: true`.
+- Cuaderno ejecutable: `neural_network/notebook/synapse_textcnn_training.ipynb`.
 
-Entradas:
+Scripts de referencia en `neural_network/scripts/`:
 
-- `dataset/final/train.json`, `val.json`, `test.json`
+- `build_vocab.py` — construcción de vocabulario y matriz FastText.
+- `train_textcnn.py` — entrenamiento reproducible (4× `CrossEntropyLoss`, logging por época).
+- `diagnose_textcnn_run.py` — análisis post-hoc de métricas y diagnóstico.
 
-Actividades:
+Criterios de cierre cumplidos:
 
-- Construir vocabulario y matriz FastText (`build_vocab.py`).
-- Entrenar con `train_textcnn.py` (4× `CrossEntropyLoss`).
-- Registrar métricas por epoch (F1 macro/micro **por cabeza** y media).
-- Seleccionar mejor checkpoint por `f1_macro_mean` en validación.
-
-Entregables:
-
-- Checkpoint `best.pt` en `dataset/checkpoints/...`
-- Reporte de métricas en validación y test.
-
-Criterios de salida:
-
-- Entrenamiento reproducible.
-- Métricas reportadas y trazables.
-- Checkpoint exportable a ONNX.
+- Entrenamiento reproducible (`seed=42`).
+- Métricas reportadas y trazables (salida streaming en Jupyter + `history.json` + JSON de cierre).
+- Checkpoint exportado a ONNX y verificado con `verify_onnx.py` (paridad ORT CPU vs PyTorch).
 
 ---
 
 ## Fase 6 — Exportación ONNX
 
-Estado: **Pendiente**  
-Ventana objetivo: **20 mayo 2026**
+Estado: **Completada**  
+Fecha: **17 mayo 2026**  
+Ventana objetivo: **20-22 mayo 2026**
 
 Objetivo:
 
-- Exportar modelo a ONNX optimizado para navegador.
+- Exportar modelo a ONNX listo para **ONNX Runtime** (CPU en validación; navegador en Fase 7 vía worker, ADR-006).
 
-Actividades:
+Artefactos:
 
-- Exportar con `export_onnx.py` (`torch.onnx.export`).
-- Cuantizar modelo (INT8 opcional con ORT quantization).
-- Validar inferencia local en Python (`onnxruntime`).
-- Preparar artefacto + `vocab.json` para el worker frontend.
+- `neural_network/notebook/data/checkpoints/textcnn_run/synapse_textcnn.onnx` (export con `export_onnx.py`; biases post-hoc alineados con `posthoc_calibration.json` cuando el export usa `--calibration`).
+- `neural_network/notebook/data/artifacts/vocab.json` (vocabulario para tokenización en inferencia).
+- Scripts: `neural_network/scripts/export_onnx.py`, `calibrate_checkpoint.py`, **`verify_onnx.py`** (paridad PyTorch ↔ ORT CPU).
 
-Entregables:
+Verificación de cierre (reproducible):
 
-- `synapse_textcnn.onnx` + `vocab.json` (+ opcional INT8).
-- Registro de tamaño, latencia y compatibilidad WebGPU/WASM.
+```bash
+pip install onnxruntime
+python neural_network/scripts/verify_onnx.py \
+  --checkpoint neural_network/notebook/data/checkpoints/textcnn_run/best.pt \
+  --onnx neural_network/notebook/data/checkpoints/textcnn_run/synapse_textcnn.onnx
+```
 
-Criterios de salida:
+(Detecta `posthoc_calibration.json` junto al checkpoint si el ONNX se exportó con calibración; si no, usar `--no-calibration`.)
 
-- Carga correcta de ONNX.
-- Inferencia consistente contra checkpoint base.
+Seguimiento en Fase 7 (no bloquea cierre F6):
+
+- Carga e inferencia en `onnxruntime-web` (WASM/WebGPU) en worker; medir latencia y operadores.
+- Cuantización INT8 opcional si hace falta tamaño/latencia en cliente.
+
+Criterios de salida cumplidos:
+
+- Grafo ONNX válido; entrada `input_ids` int64 y cuatro salidas de logits acordes al export.
+- Paridad numérica checkpoint vs ORT CPU en frases de prueba (`verify_onnx.py`).
 
 ---
 
@@ -355,12 +355,4 @@ Criterios de salida:
 | Inestabilidad de proveedor LLM           | Medio   | Fallback + límites + observabilidad                              |
 | Regresión de UX durante integración      | Medio   | Verificación E2E incremental por fase                            |
 
-
----
-
-## Evidencia de Cierre Fase 3
-
-- `dataset/processed/labeled.json`
-- `dataset/processed/backups/deprecated/phase3_quality_report.json`
-- `dataset/raw/so_questions.json`
 
