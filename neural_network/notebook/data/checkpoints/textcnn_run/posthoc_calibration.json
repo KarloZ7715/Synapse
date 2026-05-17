@@ -1,0 +1,98 @@
+{
+  "views": "score",
+  "checkpoint_epoch": 10,
+  "baseline_val": {
+    "f1_macro_nivel_tecnico": 0.8987732274575709,
+    "f1_macro_urgencia": 0.9005124266927783,
+    "f1_macro_emocion": 0.7971964619334563,
+    "f1_macro_dominio": 0.9013017331797141,
+    "f1_macro_mean": 0.8744459623158799
+  },
+  "calibrated_val": {
+    "f1_macro_nivel_tecnico": 0.9024539934630949,
+    "f1_macro_urgencia": 0.9117186422650568,
+    "f1_macro_emocion": 0.8194122726625946,
+    "f1_macro_dominio": 0.9116861616136682,
+    "f1_macro_mean": 0.8863177675011036
+  },
+  "baseline_test": {
+    "f1_macro_nivel_tecnico": 0.8818554949355256,
+    "f1_macro_urgencia": 0.8965541276536015,
+    "f1_macro_emocion": 0.7848856347297927,
+    "f1_macro_dominio": 0.8853948576116872,
+    "f1_macro_mean": 0.8621725287326518
+  },
+  "calibrated_test": {
+    "f1_macro_nivel_tecnico": 0.8859359451897127,
+    "f1_macro_urgencia": 0.9011228325347013,
+    "f1_macro_emocion": 0.7967006971519142,
+    "f1_macro_dominio": 0.8901466106850164,
+    "f1_macro_mean": 0.8684765213903362
+  },
+  "biases": {
+    "nivel_tecnico": [
+      -0.5,
+      0.0,
+      0.5
+    ],
+    "urgencia": [
+      0.25,
+      2.0,
+      0.25
+    ],
+    "emocion": [
+      0.75,
+      0.0,
+      -0.75,
+      -0.75,
+      -0.25,
+      -1.0,
+      -2.0,
+      -1.5,
+      0.0
+    ],
+    "dominio": [
+      -0.25,
+      0.75,
+      0.0,
+      0.75,
+      0.5,
+      -0.75,
+      -0.5,
+      0.0
+    ]
+  },
+  "labels": {
+    "nivel_tecnico": [
+      "principiante",
+      "intermedio",
+      "avanzado"
+    ],
+    "urgencia": [
+      "baja",
+      "media",
+      "alta"
+    ],
+    "emocion": [
+      "frustracion",
+      "confusion",
+      "curiosidad",
+      "ansiedad",
+      "motivacion",
+      "abrumado",
+      "confiado",
+      "desesperado",
+      "neutral"
+    ],
+    "dominio": [
+      "backend",
+      "frontend",
+      "bases_de_datos",
+      "movil",
+      "devops",
+      "data_science",
+      "sistemas_seguridad",
+      "general"
+    ]
+  }
+}

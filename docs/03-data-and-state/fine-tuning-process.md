@@ -37,7 +37,7 @@ graph LR
 
 > **Nota:** La redacción anterior basada en `26` salidas + `BCEWithLogitsLoss` correspondía a un esquema multi-label concatenado. Para Synapse (una etiqueta por dimensión) lo académicamente coherente es **4 cabezas softmax**.
 
-Orden fijo de etiquetas: ver `dataset/scripts/training_labels.py`.
+Orden fijo de etiquetas: ver `neural_network/scripts/training_labels.py`.
 
 ---
 
@@ -60,7 +60,7 @@ Orden fijo de etiquetas: ver `dataset/scripts/training_labels.py`.
 
 ## 4. Arquitectura detallada (SynapseTextCNN)
 
-Implementación de referencia: `dataset/scripts/textcnn_model.py`.
+Implementación de referencia: `neural_network/scripts/textcnn_model.py`.
 
 | Componente          | Tamaño / notas                                       |
 | ------------------- | ---------------------------------------------------- |
@@ -76,7 +76,7 @@ Implementación de referencia: `dataset/scripts/textcnn_model.py`.
 
 ## 5. Preprocesado de texto
 
-1. **Normalizar:** minúsculas; tokenización con regex de palabras (`[^\W\d_]+` con bandera Unicode) — ver `build_vocab.py` / `train_textcnn.py`.
+1. **Normalizar:** minúsculas; tokenización con regex de palabras (`[^\W\d_]+` con bandera Unicode) — ver `neural_network/scripts/build_vocab.py` / `train_textcnn.py`.
 2. **Índices:** `word2idx` con `<pad>=0`, `<unk>=1`.
 3. **Longitud:** `max_len` recomendado **96** (ajustable 64–128).
 4. **Padding:** relleno con `<pad>` a la derecha.
@@ -109,7 +109,7 @@ Descarga vectores (ej. Common Crawl español):
 - [FastText Spanish CC vectors](https://fasttext.cc/docs/en/pretrained-vectors.html) — fichero `.vec` (descomprimido).
 
 ```bash
-python dataset/scripts/build_vocab.py \
+python neural_network/scripts/build_vocab.py \
   --train dataset/final/train.json \
   --fasttext /ruta/a/cc.es.300.vec \
   --min-freq 2 \
@@ -122,9 +122,10 @@ Salidas: `dataset/artifacts/vocab.json`, `dataset/artifacts/embedding_init.pt`.
 ### 6.3 Entrenamiento
 
 ```bash
-python dataset/scripts/train_textcnn.py \
+python neural_network/scripts/train_textcnn.py \
   --train dataset/final/train.json \
   --val dataset/final/val.json \
+  --test dataset/final/test.json \
   --vocab dataset/artifacts/vocab.json \
   --embedding dataset/artifacts/embedding_init.pt \
   --out-dir dataset/checkpoints/textcnn_run1 \
@@ -137,6 +138,12 @@ python dataset/scripts/train_textcnn.py \
   --freeze-epochs 5 \
   --patience 8
 ```
+
+**Registro por época (consola):** `train_loss`, `train_acc` (media de accuracies por cabeza sobre el train completo en eval), `val_loss`, `val_acc`, `f1_macro_mean(val)` y macro-F1 por cabeza en validación. Tras el bucle, el script evalúa val/test y escribe `dod_report.json` (umbrales y baselines mayoritarios: ver [`runbook.md`](./runbook.md)).
+
+**`history.json`:** por época incluye `train_loss`, `train_loss_eval` (pérdida train en eval; alineada en escala con `val_loss`), `val_loss`, `metrics_train` y `metrics_val` (cada mapa trae `f1_macro_*`, `f1_micro_*`, `acc_*` y `f1_macro_mean`).
+
+**Pesos de clase:** por defecto **`--class-weights`** está activado (entropía cruzada balanceada por cabeza). Usa **`--no-class-weights`** solo para comparar un baseline sin pesos.
 
 **Hiperparámetros iniciales (T4):**
 
@@ -151,14 +158,18 @@ python dataset/scripts/train_textcnn.py \
 
 **Regularización y datos pequeños:**
 
-- Early stopping por `**f1_macro_mean`\*\* en validación.
+- Early stopping por **`f1_macro_mean`** en validación.
 - `clip_grad_norm_` (1.0) ya aplicado en script.
-- Si hay clases muy minoritarias: **class weights** en `CrossEntropyLoss` (extensión opcional del script).
-- Reportar métricas por cabeza: **F1 macro y micro**; guardar `best_metrics.json`.
+- Si hay clases muy minoritarias: los **pesos balanceados** ya van por defecto; si haces A/B, compara con **`--no-class-weights`** (ver runbook).
+- Métricas por cabeza (**F1 macro y micro**, **accuracy**): en consola se resalta macro-F1 en val por cabeza; el detalle completo queda en `history.json` y `best_metrics.json`.
 
 ### 6.4 Evaluación en test
 
-Cargar `best.pt` y correr un paso similar al bucle de `evaluate()` en `train_textcnn.py` sobre `test.json` (script extra opcional).
+Si `--test` apunta a un `test.json` existente, `train_textcnn.py` evalúa al final y escribe **`test_metrics.json`** junto al resto de artefactos en `--out-dir`. No hace falta un script aparte salvo que quieras re-evaluar un checkpoint antiguo.
+
+### 6.5 Cuaderno Jupyter / Colab
+
+El flujo reproducible en interfaz está en **`neural_network/notebook/synapse_textcnn_training.ipynb`**: mismas fases (dependencias, datos, FastText, `build_vocab`, `train_textcnn`), salida de subprocesos **en streaming** (`PYTHONUNBUFFERED` + lectura línea a línea) y gráficas de pérdida, **accuracy media** (cuatro cabezas) y macro-F1 en validación a partir de `history.json`.
 
 ---
 
@@ -167,11 +178,13 @@ Cargar `best.pt` y correr un paso similar al bucle de `evaluate()` en `train_tex
 No se usa Hugging Face Optimum (orientado a modelos HF). Flujo recomendado:
 
 ```bash
-python dataset/scripts/export_onnx.py \
+python neural_network/scripts/export_onnx.py \
   --checkpoint dataset/checkpoints/textcnn_run1/best.pt \
   --out synapse_textcnn.onnx \
   --opset 17
 ```
+
+> **Nombre del fichero:** el ejemplo y el flag `--out` por defecto en `export_onnx.py` usan **`synapse_textcnn.onnx`**. En despliegue estático o CDN puede adoptarse una variante con guiones (`synapse-textcnn.onnx`); lo importante es que la ruta del worker coincida con el artefacto publicado.
 
 **Entradas / salidas:**
 
@@ -223,7 +236,7 @@ function argmax(arr) {
 }
 
 const nivelIdx = argmax(outs.logits_nivel_tecnico.data);
-// Mapear índices → strings con los mismos órdenes que training_labels.py
+// Mapear índices → strings con los mismos órdenes que neural_network/scripts/training_labels.py
 ```
 
 **Cabeceras COOP/COEP** para `SharedArrayBuffer` / multi-hilo: igual que antes (p. ej. Cloudflare `_headers`).

@@ -32,7 +32,7 @@ synapse/
 │   │   ├── App.tsx               # Root component
 │   │   ├── index.css             # Tailwind imports
 │   │   ├── components/
-│   │   │   ├── ui/               # SolidUI components (generados)
+│   │   │   ├── ui/               # SolidUI components
 │   │   │   ├── ChatInput.tsx
 │   │   │   ├── ChatPanel.tsx
 │   │   │   ├── MetadataPanel.tsx
@@ -51,7 +51,7 @@ synapse/
 │   │   │   ├── api.ts            # Fetch wrapper + SSE
 │   │   │   └── tokenizer.ts      # Preprocesamiento para ONNX
 │   │   └── models/
-│   │       └── synapse-textcnn.onnx   # Modelo ONNX (en CDN, no en repo)
+│   │       └── synapse-textcnn.onnx   # Modelo ONNX
 │   └── tests/
 │       ├── unit/
 │       ├── e2e/
@@ -85,15 +85,38 @@ synapse/
 │   └── tests/
 │       └── test_chat.py
 │
+├── dataset/                       # Pipeline de datos (raw → final, splits)
+│   ├── final/                     # train.json, val.json, test.json
+│   ├── processed/
+│   ├── scripts/                   # Solo pipeline de dataset
+│   └── README.md
+│
+├── neural_network/                # TextCNN Synapse: única copia del código de la RN
+│   ├── notebook/                  # Cuaderno Colab; en Colab real los JSON suelen ir en /content/data
+│   │   ├── synapse_textcnn_training.ipynb
+│   │   └── data/                  # JSON del split para Colab
+│   └── scripts/
+│       ├── build_vocab.py
+│       ├── train_textcnn.py
+│       ├── textcnn_model.py
+│       ├── training_labels.py
+│       └── export_onnx.py
+│
 └── .github/
     └── workflows/
         ├── ci.yml                 # Biome + Vitest + Playwright + Lighthouse
         └── deploy.yml             # Auto-deploy a Cloudflare Pages + Render
 ```
 
+## Dataset y modelo TextCNN
+
+- `**dataset/**`: ingesta, procesamiento, fusión y splits (`final/train.json`, etc.). Los scripts bajo `dataset/scripts/` son el pipeline de datos.
+- `**neural_network/**`: implementación única de **SynapseTextCNN** — `scripts/` (vocabulario FastText, entrenamiento, ONNX, etiquetas) y `notebook/` (`synapse_textcnn_training.ipynb`: flujo Colab/repo con **salida en streaming** de `build_vocab` y `train_textcnn`). En **Google Colab** el explorador suele mostrar solo `/content`: allí se colocan `scripts/` y `data/`.
+
 ## Configuraciones Clave
 
 ### TypeScript (frontend/tsconfig.json)
+
 ```json
 {
   "compilerOptions": {
@@ -110,6 +133,7 @@ synapse/
 ```
 
 ### Biome (frontend/biome.json)
+
 ```json
 {
   "formatter": { "indentStyle": "space", "lineWidth": 100 },
@@ -124,6 +148,7 @@ synapse/
 ```
 
 ### lefthook (frontend/lefthook.yml)
+
 ```yaml
 pre-commit:
   commands:
@@ -138,6 +163,7 @@ pre-push:
 ```
 
 ### pnpm (frontend/package.json)
+
 ```json
 {
   "packageManager": "pnpm@9.0.0",
@@ -156,6 +182,7 @@ pre-push:
 ```
 
 ### Render (backend/render.yaml)
+
 ```yaml
 services:
   - type: web
@@ -179,6 +206,9 @@ services:
 cd frontend
 pnpm install
 pnpm dev              # http://localhost:5173
+
+# Dataset (entrenamiento TextCNN desde la raíz del repo)
+python neural_network/scripts/train_textcnn.py --help
 
 # Backend
 cd backend

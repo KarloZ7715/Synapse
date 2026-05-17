@@ -1,0 +1,68 @@
+{
+  "all_pass": true,
+  "checks": {
+    "f1_macro_mean": {
+      "pass": true,
+      "value": 0.8725982603109605,
+      "min": 0.38
+    },
+    "nivel_tecnico": {
+      "pass": true,
+      "value": 0.891423348949146,
+      "min": 0.42
+    },
+    "urgencia": {
+      "pass": true,
+      "value": 0.8971325314015122,
+      "min": 0.55
+    },
+    "emocion": {
+      "pass": true,
+      "value": 0.8030711440511569,
+      "min": 0.26
+    },
+    "dominio": {
+      "pass": true,
+      "value": 0.8987660168420271,
+      "min": 0.18
+    }
+  },
+  "majority_baseline_all_pass": true,
+  "majority_baseline": {
+    "nivel_tecnico": {
+      "model_macro_f1": 0.891423348949146,
+      "majority_baseline_macro_f1": 0.18110156644770084,
+      "pass": true
+    },
+    "urgencia": {
+      "model_macro_f1": 0.8971325314015122,
+      "majority_baseline_macro_f1": 0.2052119349468562,
+      "pass": true
+    },
+    "emocion": {
+      "model_macro_f1": 0.8030711440511569,
+      "majority_baseline_macro_f1": 0.039680987461155656,
+      "pass": true
+    },
+    "dominio": {
+      "model_macro_f1": 0.8987660168420271,
+      "majority_baseline_macro_f1": 0.04746515287769784,
+      "pass": true
+    }
+  },
+  "overfit_warnings": {
+    "nivel_tecnico_train_val_macro_f1_gap": 0.1067477524189121,
+    "urgencia_train_val_macro_f1_gap": 0.09982440464360975,
+    "unstable_nivel": false,
+    "unstable_urgencia": false
+  },
+  "best_epoch": 10,
+  "checkpoint_metric": {
+    "name": "mixed_f1_macro_mean",
+    "value": 0.8725982603109605
+  },
+  "val_source_summary": {
+    "real_f1_macro_mean": 0.4428543395392569,
+    "synthetic_f1_macro_mean": 0.9753440790216709
+  }
+}

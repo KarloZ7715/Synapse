@@ -48,7 +48,7 @@ self.onmessage = async (event) => {
   if (event.data.type === "classify") {
     if (!session) {
       session = await ort.InferenceSession.create(
-        "/models/synapse-textcnn.onnx",
+        "/models/synapse_textcnn.onnx",
       );
     }
     const tokens = tokenize(event.data.text);
@@ -58,6 +58,8 @@ self.onmessage = async (event) => {
   }
 };
 ```
+
+**Nota (nomenclatura ONNX):** el export por defecto en `export_onnx.py` es **`synapse_textcnn.onnx`**. La ruta pública en el Worker (p. ej. `synapse_textcnn.onnx` en `public/models/`) puede usar otra convención siempre que apunte al mismo artefacto desplegado.
 
 ## Alternativas Consideradas
 

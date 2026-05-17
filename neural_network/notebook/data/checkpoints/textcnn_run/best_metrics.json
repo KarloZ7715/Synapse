@@ -1,0 +1,131 @@
+{
+  "mixed": {
+    "f1_macro_nivel_tecnico": 0.891423348949146,
+    "f1_micro_nivel_tecnico": 0.8817567567567568,
+    "acc_nivel_tecnico": 0.8817567567567568,
+    "f1_macro_urgencia": 0.8971325314015122,
+    "f1_micro_urgencia": 0.897972972972973,
+    "acc_urgencia": 0.897972972972973,
+    "f1_macro_emocion": 0.8030711440511569,
+    "f1_micro_emocion": 0.7544444444444445,
+    "acc_emocion": 0.7544444444444445,
+    "f1_macro_dominio": 0.8987660168420271,
+    "f1_micro_dominio": 0.8851351351351351,
+    "acc_dominio": 0.8851351351351351,
+    "f1_macro_mean": 0.8725982603109605
+  },
+  "by_source": {
+    "so_es": {
+      "n": 490,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.49893934940231227,
+        "f1_micro_nivel_tecnico": 0.6693877551020408,
+        "acc_nivel_tecnico": 0.6693877551020408,
+        "f1_macro_urgencia": 0.37496444629019576,
+        "f1_micro_urgencia": 0.7346938775510204,
+        "acc_urgencia": 0.7346938775510204,
+        "f1_macro_emocion": 0.1863363363363363,
+        "f1_micro_emocion": 0.5469387755102041,
+        "acc_emocion": 0.5469387755102041,
+        "f1_macro_dominio": 0.5814519201617424,
+        "f1_micro_dominio": 0.7,
+        "acc_dominio": 0.7,
+        "f1_macro_mean": 0.4104230130476467
+      }
+    },
+    "goemotions_es": {
+      "n": 320,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.0,
+        "f1_micro_nivel_tecnico": 0.0,
+        "acc_nivel_tecnico": 0.0,
+        "f1_macro_urgencia": 0.0,
+        "f1_micro_urgencia": 0.0,
+        "acc_urgencia": 0.0,
+        "f1_macro_emocion": 0.22634669700397403,
+        "f1_micro_emocion": 0.440625,
+        "acc_emocion": 0.440625,
+        "f1_macro_dominio": 0.0,
+        "f1_micro_dominio": 0.0,
+        "acc_dominio": 0.0,
+        "f1_macro_mean": 0.05658667425099351
+      }
+    },
+    "synthetic_programming_final": {
+      "n": 915,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 1.0,
+        "f1_micro_nivel_tecnico": 1.0,
+        "acc_nivel_tecnico": 1.0,
+        "f1_macro_urgencia": 1.0,
+        "f1_micro_urgencia": 1.0,
+        "acc_urgencia": 1.0,
+        "f1_macro_emocion": 1.0,
+        "f1_micro_emocion": 1.0,
+        "acc_emocion": 1.0,
+        "f1_macro_dominio": 1.0,
+        "f1_micro_dominio": 1.0,
+        "acc_dominio": 1.0,
+        "f1_macro_mean": 1.0
+      }
+    },
+    "synthetic_so_like": {
+      "n": 75,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.7807894851373112,
+        "f1_micro_nivel_tecnico": 0.8266666666666667,
+        "acc_nivel_tecnico": 0.8266666666666667,
+        "f1_macro_urgencia": 0.6424302187518867,
+        "f1_micro_urgencia": 0.72,
+        "acc_urgencia": 0.72,
+        "f1_macro_emocion": 0.3596544780755307,
+        "f1_micro_emocion": 0.4533333333333333,
+        "acc_emocion": 0.4533333333333333,
+        "f1_macro_dominio": 0.6771301919328234,
+        "f1_micro_dominio": 0.6933333333333334,
+        "acc_dominio": 0.6933333333333334,
+        "f1_macro_mean": 0.6150010934743879
+      }
+    },
+    "__real__": {
+      "n": 810,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.49893934940231227,
+        "f1_micro_nivel_tecnico": 0.6693877551020408,
+        "acc_nivel_tecnico": 0.6693877551020408,
+        "f1_macro_urgencia": 0.37496444629019576,
+        "f1_micro_urgencia": 0.7346938775510204,
+        "acc_urgencia": 0.7346938775510204,
+        "f1_macro_emocion": 0.31606164230277706,
+        "f1_micro_emocion": 0.5049382716049383,
+        "acc_emocion": 0.5049382716049383,
+        "f1_macro_dominio": 0.5814519201617424,
+        "f1_micro_dominio": 0.7,
+        "acc_dominio": 0.7,
+        "f1_macro_mean": 0.4428543395392569
+      }
+    },
+    "__synthetic__": {
+      "n": 990,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.9867258891023262,
+        "f1_micro_nivel_tecnico": 0.9868686868686869,
+        "acc_nivel_tecnico": 0.9868686868686869,
+        "f1_macro_urgencia": 0.9787919315479829,
+        "f1_micro_urgencia": 0.9787878787878788,
+        "acc_urgencia": 0.9787878787878788,
+        "f1_macro_emocion": 0.9589046158224469,
+        "f1_micro_emocion": 0.9585858585858585,
+        "acc_emocion": 0.9585858585858585,
+        "f1_macro_dominio": 0.9769538796139274,
+        "f1_micro_dominio": 0.9767676767676767,
+        "acc_dominio": 0.9767676767676767,
+        "f1_macro_mean": 0.9753440790216709
+      }
+    }
+  },
+  "checkpoint_metric": {
+    "name": "mixed_f1_macro_mean",
+    "value": 0.8725982603109605
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "timestamp_utc": "2026-05-17T08:56:49.596088+00:00",
+  "device": "cuda",
+  "seed": 42,
+  "paths": {
+    "train": "/content/data/train.json",
+    "val": "/content/data/val.json",
+    "test": "/content/data/test.json",
+    "vocab": "/content/artifacts/vocab.json",
+    "embedding": "/content/artifacts/embedding_init.pt",
+    "out_dir": "/content/checkpoints/textcnn_run"
+  },
+  "hyperparameters": {
+    "max_len": 160,
+    "epochs": 80,
+    "batch_size": 32,
+    "lr": 0.001,
+    "weight_decay": 0.03,
+    "dropout": 0.55,
+    "freeze_epochs": 3,
+    "patience": 8,
+    "class_weights": true,
+    "early_stop_metric": "mixed_f1_macro_mean"
+  },
+  "num_labels": {
+    "nivel_tecnico": 3,
+    "urgencia": 3,
+    "emocion": 9,
+    "dominio": 8
+  }
+}

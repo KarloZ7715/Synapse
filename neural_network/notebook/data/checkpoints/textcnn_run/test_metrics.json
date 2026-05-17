@@ -1,0 +1,422 @@
+{
+  "skipped": false,
+  "test_loss": 1.7406633494487196,
+  "metrics": {
+    "f1_macro_nivel_tecnico": 0.8783894001821987,
+    "f1_micro_nivel_tecnico": 0.8658294778585591,
+    "acc_nivel_tecnico": 0.8658294778585591,
+    "f1_macro_urgencia": 0.8944365594703578,
+    "f1_micro_urgencia": 0.8929279576999339,
+    "acc_urgencia": 0.8929279576999339,
+    "f1_macro_emocion": 0.7857921010736092,
+    "f1_micro_emocion": 0.7372222222222222,
+    "acc_emocion": 0.7372222222222222,
+    "f1_macro_dominio": 0.8822164646863071,
+    "f1_micro_dominio": 0.8697951090548579,
+    "acc_dominio": 0.8697951090548579,
+    "f1_macro_mean": 0.8602086313531183
+  },
+  "by_source": {
+    "so_es": {
+      "n": 523,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.5436310632624736,
+        "f1_micro_nivel_tecnico": 0.6577437858508605,
+        "acc_nivel_tecnico": 0.6577437858508605,
+        "f1_macro_urgencia": 0.3600768980769972,
+        "f1_micro_urgencia": 0.7418738049713193,
+        "acc_urgencia": 0.7418738049713193,
+        "f1_macro_emocion": 0.22699377521597291,
+        "f1_micro_emocion": 0.5411089866156787,
+        "acc_emocion": 0.5411089866156787,
+        "f1_macro_dominio": 0.5218344283724402,
+        "f1_micro_dominio": 0.6692160611854685,
+        "acc_dominio": 0.6692160611854685,
+        "f1_macro_mean": 0.41313404123197095
+      }
+    },
+    "goemotions_es": {
+      "n": 287,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.0,
+        "f1_micro_nivel_tecnico": 0.0,
+        "acc_nivel_tecnico": 0.0,
+        "f1_macro_urgencia": 0.0,
+        "f1_micro_urgencia": 0.0,
+        "acc_urgencia": 0.0,
+        "f1_macro_emocion": 0.16050559655150431,
+        "f1_micro_emocion": 0.3902439024390244,
+        "acc_emocion": 0.3902439024390244,
+        "f1_macro_dominio": 0.0,
+        "f1_micro_dominio": 0.0,
+        "acc_dominio": 0.0,
+        "f1_macro_mean": 0.04012639913787608
+      }
+    },
+    "synthetic_programming_final": {
+      "n": 890,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 1.0,
+        "f1_micro_nivel_tecnico": 1.0,
+        "acc_nivel_tecnico": 1.0,
+        "f1_macro_urgencia": 1.0,
+        "f1_micro_urgencia": 1.0,
+        "acc_urgencia": 1.0,
+        "f1_macro_emocion": 1.0,
+        "f1_micro_emocion": 1.0,
+        "acc_emocion": 1.0,
+        "f1_macro_dominio": 1.0,
+        "f1_micro_dominio": 1.0,
+        "acc_dominio": 1.0,
+        "f1_macro_mean": 1.0
+      }
+    },
+    "synthetic_so_like": {
+      "n": 100,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.6855266636058822,
+        "f1_micro_nivel_tecnico": 0.76,
+        "acc_nivel_tecnico": 0.76,
+        "f1_macro_urgencia": 0.67725677830941,
+        "f1_micro_urgencia": 0.73,
+        "acc_urgencia": 0.73,
+        "f1_macro_emocion": 0.36684939208658374,
+        "f1_micro_emocion": 0.42,
+        "acc_emocion": 0.42,
+        "f1_macro_dominio": 0.7691029366165236,
+        "f1_micro_dominio": 0.76,
+        "acc_dominio": 0.76,
+        "f1_macro_mean": 0.6246839426545999
+      }
+    },
+    "__real__": {
+      "n": 810,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.5436310632624736,
+        "f1_micro_nivel_tecnico": 0.6577437858508605,
+        "acc_nivel_tecnico": 0.6577437858508605,
+        "f1_macro_urgencia": 0.3600768980769972,
+        "f1_micro_urgencia": 0.7418738049713193,
+        "acc_urgencia": 0.7418738049713193,
+        "f1_macro_emocion": 0.26425374395134277,
+        "f1_micro_emocion": 0.4876543209876543,
+        "acc_emocion": 0.4876543209876543,
+        "f1_macro_dominio": 0.5218344283724402,
+        "f1_micro_dominio": 0.6692160611854685,
+        "acc_dominio": 0.6692160611854685,
+        "f1_macro_mean": 0.4224490334158134
+      }
+    },
+    "__synthetic__": {
+      "n": 990,
+      "metrics": {
+        "f1_macro_nivel_tecnico": 0.9754918505787535,
+        "f1_micro_nivel_tecnico": 0.9757575757575757,
+        "acc_nivel_tecnico": 0.9757575757575757,
+        "f1_macro_urgencia": 0.9723476229692164,
+        "f1_micro_urgencia": 0.9727272727272728,
+        "acc_urgencia": 0.9727272727272728,
+        "f1_macro_emocion": 0.9406568060512295,
+        "f1_micro_emocion": 0.9414141414141414,
+        "acc_emocion": 0.9414141414141414,
+        "f1_macro_dominio": 0.9760931389087215,
+        "f1_micro_dominio": 0.9757575757575757,
+        "acc_dominio": 0.9757575757575757,
+        "f1_macro_mean": 0.9661473546269802
+      }
+    }
+  },
+  "source_summary": {
+    "real_f1_macro_mean": 0.4224490334158134,
+    "synthetic_f1_macro_mean": 0.9661473546269802
+  },
+  "head_detail": {
+    "nivel_tecnico": {
+      "labels_order": [
+        "principiante",
+        "intermedio",
+        "avanzado"
+      ],
+      "f1_per_class": {
+        "principiante": 0.8397600685518424,
+        "intermedio": 0.8320278503046127,
+        "avanzado": 0.9633802816901409
+      },
+      "confusion_matrix": [
+        [
+          490,
+          77,
+          0
+        ],
+        [
+          100,
+          478,
+          5
+        ],
+        [
+          10,
+          11,
+          342
+        ]
+      ]
+    },
+    "urgencia": {
+      "labels_order": [
+        "baja",
+        "media",
+        "alta"
+      ],
+      "f1_per_class": {
+        "baja": 0.8415841584158416,
+        "media": 0.8949468085106383,
+        "alta": 0.9467787114845938
+      },
+      "confusion_matrix": [
+        [
+          340,
+          83,
+          3
+        ],
+        [
+          41,
+          673,
+          8
+        ],
+        [
+          1,
+          26,
+          338
+        ]
+      ]
+    },
+    "emocion": {
+      "labels_order": [
+        "frustracion",
+        "confusion",
+        "curiosidad",
+        "ansiedad",
+        "motivacion",
+        "abrumado",
+        "confiado",
+        "desesperado",
+        "neutral"
+      ],
+      "f1_per_class": {
+        "frustracion": 0.6311787072243346,
+        "confusion": 0.6384180790960452,
+        "curiosidad": 0.7890625,
+        "ansiedad": 0.8907563025210085,
+        "motivacion": 0.7383863080684596,
+        "abrumado": 0.9663865546218487,
+        "confiado": 0.8245614035087719,
+        "desesperado": 0.8825622775800712,
+        "neutral": 0.7108167770419426
+      },
+      "confusion_matrix": [
+        [
+          249,
+          137,
+          1,
+          1,
+          13,
+          1,
+          0,
+          5,
+          25
+        ],
+        [
+          81,
+          226,
+          1,
+          0,
+          3,
+          0,
+          1,
+          0,
+          12
+        ],
+        [
+          11,
+          7,
+          101,
+          3,
+          10,
+          0,
+          3,
+          0,
+          8
+        ],
+        [
+          2,
+          4,
+          0,
+          106,
+          4,
+          0,
+          1,
+          3,
+          4
+        ],
+        [
+          3,
+          4,
+          4,
+          1,
+          151,
+          0,
+          2,
+          4,
+          20
+        ],
+        [
+          1,
+          0,
+          1,
+          0,
+          0,
+          115,
+          0,
+          0,
+          5
+        ],
+        [
+          3,
+          2,
+          4,
+          1,
+          11,
+          0,
+          94,
+          1,
+          8
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          4,
+          0,
+          0,
+          124,
+          11
+        ],
+        [
+          4,
+          4,
+          1,
+          1,
+          24,
+          0,
+          3,
+          1,
+          161
+        ]
+      ]
+    },
+    "dominio": {
+      "labels_order": [
+        "backend",
+        "frontend",
+        "bases_de_datos",
+        "movil",
+        "devops",
+        "data_science",
+        "sistemas_seguridad",
+        "general"
+      ],
+      "f1_per_class": {
+        "backend": 0.8213457076566125,
+        "frontend": 0.8810289389067524,
+        "bases_de_datos": 0.8571428571428571,
+        "movil": 0.9037900874635568,
+        "devops": 0.9341692789968652,
+        "data_science": 0.9416666666666667,
+        "sistemas_seguridad": 0.9172413793103448,
+        "general": 0.8013468013468014
+      },
+      "confusion_matrix": [
+        [
+          354,
+          9,
+          20,
+          7,
+          6,
+          6,
+          4,
+          13
+        ],
+        [
+          19,
+          137,
+          0,
+          1,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          17,
+          0,
+          156,
+          1,
+          1,
+          0,
+          1,
+          3
+        ],
+        [
+          17,
+          1,
+          0,
+          155,
+          0,
+          0,
+          1,
+          5
+        ],
+        [
+          2,
+          0,
+          3,
+          0,
+          149,
+          0,
+          3,
+          1
+        ],
+        [
+          5,
+          0,
+          0,
+          0,
+          1,
+          113,
+          0,
+          2
+        ],
+        [
+          9,
+          0,
+          1,
+          0,
+          3,
+          0,
+          133,
+          2
+        ],
+        [
+          20,
+          5,
+          5,
+          0,
+          1,
+          0,
+          0,
+          119
+        ]
+      ]
+    }
+  }
+}
