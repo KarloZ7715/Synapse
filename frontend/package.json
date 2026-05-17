@@ -1,0 +1,41 @@
+{
+  "name": "synapse-frontend",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "sync:model": "node scripts/sync-model-artifacts.mjs"
+  },
+  "dependencies": {
+    "@ark-ui/solid": "^5.36.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "onnxruntime-web": "1.20.1",
+    "solid-js": "^1.9.5",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@playwright/test": "^1.49.1",
+    "@solidjs/testing-library": "^0.8.10",
+    "@tailwindcss/vite": "^4.0.0",
+    "jsdom": "^25.0.1",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vite-plugin-solid": "^2.11.6",
+    "vitest": "^2.1.8"
+  }
+}

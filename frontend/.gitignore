@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.env.local
+playwright-report
+test-results
+public/models/*.onnx
+public/models/vocab.json
