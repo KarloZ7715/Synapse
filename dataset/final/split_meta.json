@@ -1,8 +1,10 @@
 {
-  "source": "/home/carloscc/Documentos/Dev/synapse/dataset/final/dataset.json",
   "seed": 42,
-  "train": 3499,
-  "val": 750,
-  "test": 751,
-  "stratify_note": "split_dataset.split_data"
+  "target_rows": 12000,
+  "auto_target_rows": true,
+  "train": 8400,
+  "val": 1800,
+  "test": 1800,
+  "max_eval_synthetic_frac": 0.55,
+  "stratify_note": "source-aware deterministic split; gates verify per-head support"
 }

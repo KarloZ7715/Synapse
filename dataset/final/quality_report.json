@@ -1,115 +1,587 @@
 {
-  "total_rows": 5000,
-  "target_rows": 5000,
-  "seed": 42,
+  "total_rows": 12000,
   "sources": {
-    "so_es": 250,
-    "goemotions_es": 4750
+    "so_es": 3000,
+    "goemotions_es": 1800,
+    "synthetic_so_like": 599,
+    "synthetic_programming_final": 6601
   },
   "counts": {
     "nivel_tecnico": {
-      "principiante": 2006,
-      "avanzado": 121,
-      "intermedio": 2873
+      "principiante": 3758,
+      "avanzado": 2619,
+      "intermedio": 3823
     },
     "urgencia": {
-      "alta": 1500,
-      "media": 2300,
-      "baja": 1200
+      "alta": 2634,
+      "media": 4656,
+      "baja": 2910
     },
     "emocion": {
-      "ansiedad": 556,
-      "frustracion": 556,
-      "confusion": 556,
-      "neutral": 555,
-      "curiosidad": 689,
-      "abrumado": 555,
-      "motivacion": 978,
-      "desesperado": 555
+      "confusion": 2019,
+      "frustracion": 2699,
+      "curiosidad": 997,
+      "motivacion": 1275,
+      "ansiedad": 856,
+      "neutral": 1397,
+      "desesperado": 957,
+      "confiado": 926,
+      "abrumado": 874
     },
     "dominio": {
-      "backend": 71,
-      "bases_de_datos": 28,
-      "data_science": 28,
-      "devops": 28,
-      "frontend": 28,
-      "general": 4778,
-      "ingenieria_software": 9,
-      "movil": 27,
-      "seguridad": 3
+      "backend": 2477,
+      "bases_de_datos": 1201,
+      "data_science": 952,
+      "devops": 982,
+      "frontend": 1145,
+      "general": 1111,
+      "movil": 1292,
+      "sistemas_seguridad": 1040
     }
   },
-  "balance_mvp": {
-    "passes": true,
-    "checks": {
-      "nivel_avanzado_mvp_frac_ge_0.022": true,
-      "nivel_avanzado_mvp_count_ge_100": true,
-      "nivel_principiante_ge_0.22": true,
-      "urgencia_alta_ge_0.14": true,
-      "urgencia_baja_ge_0.12": true
-    },
-    "fractions": {
-      "nivel_tecnico": {
-        "principiante": 0.4012,
-        "intermedio": 0.5746,
-        "avanzado": 0.0242
-      },
-      "urgencia": {
-        "baja": 0.24,
-        "media": 0.46,
-        "alta": 0.3
-      }
-    },
-    "stretch_goals": {
-      "nivel_avanzado_frac_ge_0.12": false,
-      "note": "12 % suele requerir etiquetado LLM de nivel en GoE o más SO avanzado."
-    },
-    "infer_nivel_capacity_goe": {
-      "intermedio": 27471,
-      "principiante": 25299,
-      "avanzado": 109
-    },
-    "targets_reference": {
-      "nivel_tecnico": {
-        "principiante": 0.34,
-        "intermedio": 0.46,
-        "avanzado": 0.2
-      },
-      "urgencia": {
-        "baja": 0.24,
-        "media": 0.46,
-        "alta": 0.3
-      }
-    }
+  "duplicates": {
+    "total": 12000,
+    "unique": 12000,
+    "duplicates": 0
   },
-  "sampling": {
-    "goemotions": "balanced_buckets_emocion_nivel_urgencia",
-    "targets_integer": {
-      "nivel_tecnico": {
-        "principiante": 1700,
-        "intermedio": 2300,
-        "avanzado": 1000
-      },
-      "urgencia": {
-        "baja": 1200,
-        "media": 2300,
-        "alta": 1500
-      },
-      "emocion": {
-        "frustracion": 556,
-        "confusion": 556,
-        "curiosidad": 556,
-        "ansiedad": 556,
-        "motivacion": 556,
-        "abrumado": 555,
-        "confiado": 555,
-        "desesperado": 555,
-        "neutral": 555
-      }
-    }
+  "source_mix": {
+    "all_synthetic_fraction": 0.6,
+    "train_synthetic_fraction": 0.621429,
+    "val_synthetic_fraction": 0.55,
+    "test_synthetic_fraction": 0.55,
+    "max_train_synthetic_fraction": 0.7,
+    "max_eval_synthetic_fraction": 0.55
   },
-  "inputs": {
-    "labeled": "/home/carloscc/Documentos/Dev/synapse/dataset/processed/labeled.json",
-    "goemotions": "/home/carloscc/Documentos/Dev/synapse/dataset/processed/goemotions_mapped.json"
+  "thresholds": {
+    "full_min_per_label": 400,
+    "split_min_per_label": 66
+  },
+  "gates": {
+    "full": {
+      "passes": true,
+      "detail": {
+        "nivel_tecnico": {
+          "principiante": {
+            "count": 3758,
+            "min": 400,
+            "pass": true
+          },
+          "intermedio": {
+            "count": 3823,
+            "min": 400,
+            "pass": true
+          },
+          "avanzado": {
+            "count": 2619,
+            "min": 400,
+            "pass": true
+          }
+        },
+        "urgencia": {
+          "baja": {
+            "count": 2910,
+            "min": 400,
+            "pass": true
+          },
+          "media": {
+            "count": 4656,
+            "min": 400,
+            "pass": true
+          },
+          "alta": {
+            "count": 2634,
+            "min": 400,
+            "pass": true
+          }
+        },
+        "emocion": {
+          "frustracion": {
+            "count": 2699,
+            "min": 400,
+            "pass": true
+          },
+          "confusion": {
+            "count": 2019,
+            "min": 400,
+            "pass": true
+          },
+          "curiosidad": {
+            "count": 997,
+            "min": 400,
+            "pass": true
+          },
+          "ansiedad": {
+            "count": 856,
+            "min": 400,
+            "pass": true
+          },
+          "motivacion": {
+            "count": 1275,
+            "min": 400,
+            "pass": true
+          },
+          "abrumado": {
+            "count": 874,
+            "min": 400,
+            "pass": true
+          },
+          "confiado": {
+            "count": 926,
+            "min": 400,
+            "pass": true
+          },
+          "desesperado": {
+            "count": 957,
+            "min": 400,
+            "pass": true
+          },
+          "neutral": {
+            "count": 1397,
+            "min": 400,
+            "pass": true
+          }
+        },
+        "dominio": {
+          "backend": {
+            "count": 2477,
+            "min": 400,
+            "pass": true
+          },
+          "frontend": {
+            "count": 1145,
+            "min": 400,
+            "pass": true
+          },
+          "bases_de_datos": {
+            "count": 1201,
+            "min": 400,
+            "pass": true
+          },
+          "movil": {
+            "count": 1292,
+            "min": 400,
+            "pass": true
+          },
+          "devops": {
+            "count": 982,
+            "min": 400,
+            "pass": true
+          },
+          "data_science": {
+            "count": 952,
+            "min": 400,
+            "pass": true
+          },
+          "sistemas_seguridad": {
+            "count": 1040,
+            "min": 400,
+            "pass": true
+          },
+          "general": {
+            "count": 1111,
+            "min": 400,
+            "pass": true
+          }
+        }
+      }
+    },
+    "splits": {
+      "passes": true,
+      "detail": {
+        "train": {
+          "passes": true,
+          "detail": {
+            "nivel_tecnico": {
+              "principiante": {
+                "count": 2645,
+                "min": 66,
+                "pass": true
+              },
+              "intermedio": {
+                "count": 2688,
+                "min": 66,
+                "pass": true
+              },
+              "avanzado": {
+                "count": 1874,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "urgencia": {
+              "baja": {
+                "count": 2087,
+                "min": 66,
+                "pass": true
+              },
+              "media": {
+                "count": 3205,
+                "min": 66,
+                "pass": true
+              },
+              "alta": {
+                "count": 1915,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "emocion": {
+              "frustracion": {
+                "count": 1826,
+                "min": 66,
+                "pass": true
+              },
+              "confusion": {
+                "count": 1387,
+                "min": 66,
+                "pass": true
+              },
+              "curiosidad": {
+                "count": 698,
+                "min": 66,
+                "pass": true
+              },
+              "ansiedad": {
+                "count": 626,
+                "min": 66,
+                "pass": true
+              },
+              "motivacion": {
+                "count": 872,
+                "min": 66,
+                "pass": true
+              },
+              "abrumado": {
+                "count": 632,
+                "min": 66,
+                "pass": true
+              },
+              "confiado": {
+                "count": 672,
+                "min": 66,
+                "pass": true
+              },
+              "desesperado": {
+                "count": 703,
+                "min": 66,
+                "pass": true
+              },
+              "neutral": {
+                "count": 984,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "dominio": {
+              "backend": {
+                "count": 1689,
+                "min": 66,
+                "pass": true
+              },
+              "frontend": {
+                "count": 821,
+                "min": 66,
+                "pass": true
+              },
+              "bases_de_datos": {
+                "count": 853,
+                "min": 66,
+                "pass": true
+              },
+              "movil": {
+                "count": 912,
+                "min": 66,
+                "pass": true
+              },
+              "devops": {
+                "count": 703,
+                "min": 66,
+                "pass": true
+              },
+              "data_science": {
+                "count": 703,
+                "min": 66,
+                "pass": true
+              },
+              "sistemas_seguridad": {
+                "count": 728,
+                "min": 66,
+                "pass": true
+              },
+              "general": {
+                "count": 798,
+                "min": 66,
+                "pass": true
+              }
+            }
+          }
+        },
+        "val": {
+          "passes": true,
+          "detail": {
+            "nivel_tecnico": {
+              "principiante": {
+                "count": 546,
+                "min": 66,
+                "pass": true
+              },
+              "intermedio": {
+                "count": 552,
+                "min": 66,
+                "pass": true
+              },
+              "avanzado": {
+                "count": 382,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "urgencia": {
+              "baja": {
+                "count": 397,
+                "min": 66,
+                "pass": true
+              },
+              "media": {
+                "count": 729,
+                "min": 66,
+                "pass": true
+              },
+              "alta": {
+                "count": 354,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "emocion": {
+              "frustracion": {
+                "count": 441,
+                "min": 66,
+                "pass": true
+              },
+              "confusion": {
+                "count": 308,
+                "min": 66,
+                "pass": true
+              },
+              "curiosidad": {
+                "count": 156,
+                "min": 66,
+                "pass": true
+              },
+              "ansiedad": {
+                "count": 106,
+                "min": 66,
+                "pass": true
+              },
+              "motivacion": {
+                "count": 214,
+                "min": 66,
+                "pass": true
+              },
+              "abrumado": {
+                "count": 120,
+                "min": 66,
+                "pass": true
+              },
+              "confiado": {
+                "count": 130,
+                "min": 66,
+                "pass": true
+              },
+              "desesperado": {
+                "count": 111,
+                "min": 66,
+                "pass": true
+              },
+              "neutral": {
+                "count": 214,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "dominio": {
+              "backend": {
+                "count": 369,
+                "min": 66,
+                "pass": true
+              },
+              "frontend": {
+                "count": 165,
+                "min": 66,
+                "pass": true
+              },
+              "bases_de_datos": {
+                "count": 169,
+                "min": 66,
+                "pass": true
+              },
+              "movil": {
+                "count": 201,
+                "min": 66,
+                "pass": true
+              },
+              "devops": {
+                "count": 121,
+                "min": 66,
+                "pass": true
+              },
+              "data_science": {
+                "count": 128,
+                "min": 66,
+                "pass": true
+              },
+              "sistemas_seguridad": {
+                "count": 164,
+                "min": 66,
+                "pass": true
+              },
+              "general": {
+                "count": 163,
+                "min": 66,
+                "pass": true
+              }
+            }
+          }
+        },
+        "test": {
+          "passes": true,
+          "detail": {
+            "nivel_tecnico": {
+              "principiante": {
+                "count": 567,
+                "min": 66,
+                "pass": true
+              },
+              "intermedio": {
+                "count": 583,
+                "min": 66,
+                "pass": true
+              },
+              "avanzado": {
+                "count": 363,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "urgencia": {
+              "baja": {
+                "count": 426,
+                "min": 66,
+                "pass": true
+              },
+              "media": {
+                "count": 722,
+                "min": 66,
+                "pass": true
+              },
+              "alta": {
+                "count": 365,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "emocion": {
+              "frustracion": {
+                "count": 432,
+                "min": 66,
+                "pass": true
+              },
+              "confusion": {
+                "count": 324,
+                "min": 66,
+                "pass": true
+              },
+              "curiosidad": {
+                "count": 143,
+                "min": 66,
+                "pass": true
+              },
+              "ansiedad": {
+                "count": 124,
+                "min": 66,
+                "pass": true
+              },
+              "motivacion": {
+                "count": 189,
+                "min": 66,
+                "pass": true
+              },
+              "abrumado": {
+                "count": 122,
+                "min": 66,
+                "pass": true
+              },
+              "confiado": {
+                "count": 124,
+                "min": 66,
+                "pass": true
+              },
+              "desesperado": {
+                "count": 143,
+                "min": 66,
+                "pass": true
+              },
+              "neutral": {
+                "count": 199,
+                "min": 66,
+                "pass": true
+              }
+            },
+            "dominio": {
+              "backend": {
+                "count": 419,
+                "min": 66,
+                "pass": true
+              },
+              "frontend": {
+                "count": 159,
+                "min": 66,
+                "pass": true
+              },
+              "bases_de_datos": {
+                "count": 179,
+                "min": 66,
+                "pass": true
+              },
+              "movil": {
+                "count": 179,
+                "min": 66,
+                "pass": true
+              },
+              "devops": {
+                "count": 158,
+                "min": 66,
+                "pass": true
+              },
+              "data_science": {
+                "count": 121,
+                "min": 66,
+                "pass": true
+              },
+              "sistemas_seguridad": {
+                "count": 148,
+                "min": 66,
+                "pass": true
+              },
+              "general": {
+                "count": 150,
+                "min": 66,
+                "pass": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "source_mix": {
+      "passes": true,
+      "checks": {
+        "train_synthetic_fraction_le_0.70": true,
+        "val_synthetic_fraction_le_0.55": true,
+        "test_synthetic_fraction_le_0.55": true
+      }
+    },
+    "all_pass": true
   }
 }

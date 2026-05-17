@@ -1,6 +1,6 @@
 # Dataset — Plan de Generación Híbrida
 
-## 1. Decisión: Opción 1 — GoEmotions ES + Stack Overflow API + LLM
+## 1. Decisión: GoEmotions ES + Stack Overflow API + LLM
 
 Estrategia híbrida que combina un dataset real de emociones en español con preguntas reales de programación y generación asistida por LLM para las dimensiones faltantes.
 
@@ -33,55 +33,56 @@ graph LR
 | Licencia  | Apache 2.0                                          |
 
 
-**Mapeo de emociones (28 → 9):**
+**Mapeo de emociones (28 → 10):**
 
 
-| Emociones GoEmotions ES                                                 | Emoción Synapse |
-| ----------------------------------------------------------------------- | --------------- |
-| anger, annoyance, disapproval                                           | `frustracion`   |
-| confusion (derivable de curiosity + sadness)                            | `confusion`     |
-| curiosity, interest                                                     | `curiosidad`    |
-| nervousness, fear, anxiety                                              | `ansiedad`      |
-| admiration, approval, excitement, joy, love, optimism, pride, gratitude | `motivacion`    |
-| realization, surprise (negativo)                                        | `abrumado`      |
-| approval, pride (positivo)                                              | `confiado`      |
-| sadness, disappointment, grief, remorse                                 | `desesperado`   |
-| neutral, caring                                                         | `neutral`       |
+| Emociones GoEmotions ES                                | Emoción Synapse |
+| ------------------------------------------------------ | --------------- |
+| anger, annoyance, disapproval                          | `frustracion`   |
+| confusion                                              | `confusion`     |
+| curiosity, interest                                    | `curiosidad`    |
+| desire                                                 | `curiosidad`    |
+| nervousness, fear                                      | `ansiedad`      |
+| admiration, excitement, joy, love, optimism, gratitude | `motivacion`    |
+| approval, pride                                        | `confiado`      |
+| realization, surprise                                  | `abrumado`      |
+| sadness, disappointment, grief, remorse                | `desesperado`   |
+| neutral, caring                                        | `neutral`       |
 
 
 ### 2.2 Stack Overflow ES API (Preguntas Reales)
 
 
-| Propiedad       | Valor                                                                           |
-| --------------- | ------------------------------------------------------------------------------- |
-| API             | `api.stackexchange.com/2.3/questions?site=es.stackoverflow`                     |
-| Filtros         | tags: python, javascript, java, react, sql, css, html, node.js, typescript, git |
-| Selección       | score ≥ 3 (garantiza calidad)                                                   |
-| Volumen         | 200-300 preguntas semilla                                                       |
-| Datos extraídos | title, body (sin respuestas), tags, score, view_count                           |
+| Propiedad       | Valor                                                                                                             |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| API             | `api.stackexchange.com/2.3/questions?site=es.stackoverflow`                                                       |
+| Filtros         | tags: python, javascript, java, react, sql, css, html, node.js, typescript, git                                   |
+| Selección       | Semilla desde `so_questions.json` existente + cuotas por dominio + relleno hasta `--max-questions` (default 1600) |
+| Volumen         | ~1.6k preguntas semilla (API budget `--max-api-calls`, default 960)                                               |
+| Datos extraídos | title, body (sin respuestas), tags, score, view_count                                                             |
 
 
 **Mapeo de tags → Dominio Synapse:**
 
 
-| Tags de Stack Overflow                             | Dominio Synapse       |
-| -------------------------------------------------- | --------------------- |
-| python, javascript, java, go, rust, php, ruby      | `backend`             |
-| react, vue, css, html, angular, svelte, nextjs     | `frontend`            |
-| sql, mysql, postgresql, mongodb, redis             | `bases_de_datos`      |
-| docker, kubernetes, aws, gcp, ci/cd, nginx         | `devops`              |
-| android, ios, flutter, react-native, swift, kotlin | `movil`               |
-| pandas, numpy, scikit-learn, tensorflow, pytorch   | `data_science`        |
-| sorting, algorithms, data-structures, recursion    | `algoritmos`          |
-| security, authentication, encryption, oauth        | `seguridad`           |
-| os, memory, concurrency, threads, process          | `sistemas`            |
-| design-patterns, testing, architecture, solid      | `ingenieria_software` |
-| Otros                                              | `general`             |
+| Tags de Stack Overflow                                      | Dominio Synapse       |
+| ----------------------------------------------------------- | --------------------- |
+| python, javascript, java, go, rust, php, ruby               | `backend`             |
+| react, vue, css, html, angular, svelte, nextjs              | `frontend`            |
+| sql, mysql, postgresql, mongodb, redis                      | `bases_de_datos`      |
+| docker, kubernetes, aws, gcp, ci/cd, nginx                  | `devops`              |
+| android, ios, flutter, react-native, swift, kotlin          | `movil`               |
+| pandas, numpy, scikit-learn, tensorflow, pytorch            | `data_science`        |
+| sorting, algorithms, data-structures, recursion             | `algoritmos`          |
+| security, authentication, encryption, oauth, jwt, xss, csrf | `seguridad`           |
+| os, memory, concurrency, threads, process, linux, bash      | `sistemas`            |
+| design-patterns, testing, architecture, solid, tdd, junit   | `ingenieria_software` |
+| Otros                                                       | `general`             |
 
 
 ### 2.3 Fuentes complementarias (emoción y afín en español)
 
-Útiles para **aumentar cobertura emocional** y robustez fuera del estilo Reddit/GoEmotions, o para **pre-entrenar / regularizar** antes del dataset mezclado con programación. Siempre revisar licencia y **re-mapear** etiquetas al esquema Synapse (9 emociones) mediante reglas documentadas.
+Útiles para **aumentar cobertura emocional** y robustez fuera del estilo Reddit/GoEmotions, o para **pre-entrenar / regularizar** antes del dataset mezclado con programación. 
 
 
 | Dataset                                  | Enlace                                                                                                                       | Por qué aplica                                                                   |
@@ -91,12 +92,6 @@ graph LR
 | **SemEval-2018 Task 1** (E-c, ES)        | [SemEvalWorkshop/sem_eval_2018_task_1](https://huggingface.co/datasets/SemEvalWorkshop/sem_eval_2018_task_1)                 | Emoción multi-label en tweets ES; etiquetas distintas → requiere mapeo cuidadoso |
 | **Preguntas técnicas ES**                | API/site `es.stackoverflow` + dump oficial SE                                                                                | Dominio “programación en español” nativo; ya integrado en el pipeline            |
 
-
-**Kaggle:** no hay un estándar único “SO español” en Kaggle; suele usarse **API/dump** (arriba) o subconjuntos de SO en inglés solo como data augmentation de *estilo* (con filtro de idioma si se mezcla).
-
-**Sintético (LLM):** misma política que en Copilot — generar variaciones controladas y **filtrar** con ROUGE-L / revisión manual para clases minoritarias.
-
-**Objetivo de volumen:** mínimo defendible **~2000** ejemplos curados; recomendado **4000–6000** para emociones/dominios minoritarios. **Umbral por clase rara:** apuntar a **≥100–150** ejemplos (real+aumentados); ideal **≥200**.
 
 ### 2.4 Copilot (Etiquetado de Dimensiones Faltantes)
 
@@ -116,24 +111,45 @@ Usamos Copilot via proxy OpenAI-compatible y rotamos modelos disponibles:
 - Validación dinámica de IDs contra `GET /v1/models`
 - Reanudación incremental sobre `processed/labeled.json`
 
-**Tiempo estimado:** ~1 día para el lote de 250 preguntas SO ES
+**Tiempo Copilot:** depende del volumen (`--max-examples`), modelos y retardo entre peticiones; el flujo es incremental en `labeled.json` (véase §3.0).
 
 ## 3. Pipeline de Generación
+
+### 3.0 Orden operativo
+
+1. **GoEmotions** (si falta `raw/goemotions_es.json`): `python dataset/scripts/download_goemotions.py`
+2. **Mapeo 28 → Synapse:** `python dataset/scripts/map_emotions.py` — `approval` y `pride` → `confiado` (no `motivacion`).
+3. **Extracción SO:** `python dataset/scripts/extract_so.py` — semilla desde `so_questions.json` existente por defecto (`--seed-existing`); revisar `dataset/raw/extraction_audit.json`.
+4. **Etiquetado Copilot:** `label_with_copilot.py` (`--list-models`, etiquetado con resume, `--label-emotion` para nuevas filas, `--emotion-backfill-only` para huecos); fallos en `dataset/processed/labeling_audit/copilot_failures.jsonl`.
+5. **Dataset final:** `python dataset/scripts/build_final_dataset.py --target-rows 5000 --seed 42` — por defecto modo pragmático; `--no-pragmatic-supervised-dataset` restaura el modo honesto. Salidas en `dataset/final/` (`quality_report.json`, `dataset_quality_gates.json`, splits salvo `--no-split`).
+
+### 3.1 Rebalanceo agresivo (colas SO + gates estrictos)
+
+- **Métricas y lectura de artefactos:** `[dataset-rebalance-metrics.md](./dataset-rebalance-metrics.md)`.
+- **Extracción SO** con más señal hacia dominios débiles y búsquedas advanced/low-urgency:
+`python dataset/scripts/extract_so.py --rebalance-profile aggressive` (sube tope de términos salvo que los pases explícito; revisa `max_api_calls`).
+- **Build final** con gates duros (falla con código distinto de 0 si no cumple):
+`python dataset/scripts/build_final_dataset.py --target-rows 5000 --seed 42 --strict-rebalance-gates`
+- **Sin augmentación** de sufijos SO: `--no-augment-so`.
+- **Calibración Copilot** tras el etiquetado principal (sube colas `avanzado` / `alta` / opcional `baja`):
+`python dataset/scripts/label_with_copilot.py --calibration-pass --target-min-avanzado … --target-min-alta … --target-min-baja …`
+
+**Precedencia emoción SO en `labeled.json`:** si `emocion` ∈ taxonomía Synapse → se considera curada/LLM según flujo; si no, heurística `infer_emocion_so` en build. Metadato `emocion_source_so`: `llm_or_curated` `heuristic`.
 
 ```mermaid
 graph TD
     subgraph PASO1["Paso 1: Extracción"]
-        A1[Stack Overflow ES API] --> A2[200-300 preguntas semilla]
+        A1[Stack Overflow ES API] --> A2[semilla + hasta ~1.6k preguntas]
         A2 --> A3[Filtrar por tags populares<br/>score ≥ 3]
     end
 
     subgraph PASO2["Paso 2: Mapeo Emociones"]
         B1[GoEmotions ES<br/>54,263 filas] --> B2[Seleccionar muestras<br/>representativas]
-        B2 --> B3[Mapear 28 → 9 emociones]
+        B2 --> B3[Mapear 28 → 10 emociones Synapse]
     end
 
     subgraph PASO3["Paso 3: Etiquetado LLM"]
-        C1[Semillas SO ES] --> C2[Copilot etiqueta:<br/>urgencia + nivel técnico]
+        C1[Semillas SO ES] --> C2[Copilot: nivel + urgencia + emoción opcional]
         C2 --> C3[Formato JSON estructurado]
     end
 
@@ -184,7 +200,7 @@ questions = response.json()["items"]
 ### Paso 2: Mapeo de Emociones (GoEmotions ES → Synapse)
 
 ```python
-# Mapeo de las 28 emociones de GoEmotions a nuestras 9
+# Mapeo de las 28 emociones de GoEmotions hacia la taxonomía Synapse (10 emociones)
 EMOTION_MAPPING = {
     # frustracion
     "anger": "frustracion",
@@ -211,8 +227,6 @@ EMOTION_MAPPING = {
     # abrumado
     "surprise": "abrumado",
     "realization": "abrumado",
-    # confiado
-    # (se deriva de approval + pride en contexto positivo)
     # desesperado
     "sadness": "desesperado",
     "disappointment": "desesperado",
@@ -271,17 +285,17 @@ graph LR
 ### Paso 5: Filtrado y Validación
 
 - Eliminar duplicados (similitud ROUGE-L > 0.8)
-- Validar clases minoritarias: **≥100–150** ejemplos (ideal **≥200**); ampliar dataset hacia **4k–6k** ejemplos cuando sea posible
+- Validar clases minoritarias: **≥2000** ejemplos (ideal **≥2500**); ampliar dataset hacia **10k - 12k** ejemplos cuando sea posible
 
 ## 4. Distribución de Clases Objetivo
 
 
 | Dimensión     | Etiquetas                              | Ejemplos por clase | Total |
 | ------------- | -------------------------------------- | ------------------ | ----- |
-| Nivel técnico | 3 (principiante, intermedio, avanzado) | ~667               | 5000  |
-| Urgencia      | 3 (baja, media, alta)                  | ~667               | 5000  |
-| Emoción       | 9                                      | ~222               | 5000  |
-| Dominio       | 11                                     | ~182               | 5000  |
+| Nivel técnico | 3 (principiante, intermedio, avanzado) | ~2000              | 10000 |
+| Urgencia      | 3 (baja, media, alta)                  | ~2000              | 10000 |
+| Emoción       | 10                                     | ~850               | 10000 |
+| Dominio       | 11                                     | ~900               | 10000 |
 
 
 ## 5. Formato del Dataset
@@ -312,26 +326,24 @@ graph LR
 ## 6. Herramientas
 
 
-| Herramienta                  | Uso                             | Fuente                                                                             |
-| ---------------------------- | ------------------------------- | ---------------------------------------------------------------------------------- |
-| Stack Exchange API           | Extraer preguntas semilla       | `api.stackexchange.com`                                                            |
-| GoEmotions ES (AnasAlokla)   | Dataset de emociones en español | [HuggingFace](https://huggingface.co/datasets/AnasAlokla/multilingual_go_emotions) |
-| GitHub Copilot + copilot-api | Etiquetado (urgencia + nivel)   | `npx copilot-api@latest start --port 4141`                                         |
-| NLPaug                       | Data augmentation               | `pip install nlpaug`                                                               |
-| ROUGE-L                      | Filtrado de duplicados          | `pip install rouge-score`                                                          |
-| Python + pandas              | Procesamiento y limpieza        | -                                                                                  |
+| Herramienta                  | Uso                                              | Fuente                                                                             |
+| ---------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Stack Exchange API           | Extraer preguntas semilla                        | `api.stackexchange.com`                                                            |
+| GoEmotions ES (AnasAlokla)   | Dataset de emociones en español                  | [HuggingFace](https://huggingface.co/datasets/AnasAlokla/multilingual_go_emotions) |
+| GitHub Copilot + copilot-api | Etiquetado (urgencia + nivel + emoción opcional) | `npx copilot-api@latest start --port 4141`                                         |
+| `STACKEXCHANGE_KEY`          | Cuota API Stack Exchange (stackapps.com)         | Variable en entorno o `.env` leída por `extract_so.py` / scripts                   |
+| NLPaug                       | Data augmentation                                | `pip install nlpaug`                                                               |
+| ROUGE-L                      | Filtrado de duplicados                           | `pip install rouge-score`                                                          |
+| Python + pandas              | Procesamiento y limpieza                         | -                                                                                  |
 
 
 ## 7. Entregables
 
 ```
 dataset/
-├── raw/
-│   ├── so_questions.json          # Preguntas originales de SO ES
-│   ├── goemotions_es.csv          # GoEmotions ES completo
-│   └── goemotions_es.json         # GoEmotions ES en JSON
 ├── processed/
-│   ├── goemotions_mapped.json     # Mapeo GoEmotions 28 -> 9
+│   ├── goemotions_mapped.json     # Mapeo GoEmotions 28 → Synapse
+│   └── labeling_audit/            # Fallos Copilot (p. ej. copilot_failures.jsonl)
 │   └── labeled.json               # Con etiquetas del LLM
 ├── final/
 │   ├── dataset.json               # Dataset final entrenable (F4: build_final_dataset)
@@ -349,14 +361,22 @@ dataset/
 │   ├── label_with_copilot.py
 │   ├── build_final_dataset.py    # Fusiona SO+GoE, meta ~4k–6k, dedup, split
 │   ├── split_dataset.py           # Train/val/test reproducible (también desde build_final_dataset)
-│   ├── build_vocab.py              # Vocab + matriz FastText
-│   ├── textcnn_model.py           # Definición SynapseTextCNN
-│   ├── training_labels.py         # Orden de clases por cabeza
-│   ├── train_textcnn.py         # Entrenamiento PyTorch
-│   ├── export_onnx.py            # Export ONNX
 │   └── backup/
 └── README.md
+
+neural_network/                      # TextCNN + cuaderno (implementación única)
+├── notebook/
+│   ├── synapse_textcnn_training.ipynb
+│   └── data/                        # train/val/test para Colab (opcional en repo)
+└── scripts/
+    ├── build_vocab.py
+    ├── train_textcnn.py
+    ├── textcnn_model.py             # Definición SynapseTextCNN
+    ├── training_labels.py           # Orden de clases por cabeza
+    └── export_onnx.py
 ```
+
+Flujo de **regeneración de datos**: §3.0 de este documento. **Entrenamiento** (épocas, DoD, cuaderno): `runbook.md` y `fine-tuning-process.md` (§6).
 
 ## 8. Cronograma
 

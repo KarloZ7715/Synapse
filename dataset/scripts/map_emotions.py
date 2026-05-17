@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Script para mapear emociones de GoEmotions (28) a Synapse (9).
+Script para mapear emociones de GoEmotions (28) a Synapse (10).
 
 Mapeo basado en investigación académica:
 - GoEmotions: 28 emociones de Reddit
-- Synapse: 9 emociones educativas para programación
+- Synapse: 10 emociones educativas para programación
 
 Uso:
     python map_emotions.py
@@ -22,7 +22,7 @@ RAW_DIR = PROJECT_ROOT / "dataset" / "raw"
 PROCESSED_DIR = PROJECT_ROOT / "dataset" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-# Mapeo de emociones GoEmotions (28) → Synapse (9)
+# Mapeo de emociones GoEmotions (28) → Synapse (10)
 # Basado en investigación de taxonomías emocionales educativas
 EMOTION_MAPPING = {
     # frustracion: emociones negativas intensas
@@ -42,14 +42,16 @@ EMOTION_MAPPING = {
     "nervousness": "ansiedad",
     "fear": "ansiedad",
     
+    # confiado: seguridad / validación positiva (no mezclar con gratitud → motivacion)
+    "approval": "confiado",
+    "pride": "confiado",
+
     # motivacion: emociones positivas y energía
     "admiration": "motivacion",
-    "approval": "motivacion",
     "excitement": "motivacion",
     "joy": "motivacion",
     "love": "motivacion",
     "optimism": "motivacion",
-    "pride": "motivacion",
     "gratitude": "motivacion",
     
     # abrumado: sobrecarga cognitiva
@@ -122,6 +124,7 @@ def map_emotions_for_example(labels: list) -> str:
         "confusion",
         "neutral",
         "curiosidad",
+        "confiado",
         "motivacion",
     ]
     

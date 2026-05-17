@@ -1,1090 +1,826 @@
 #!/usr/bin/env python3
-"""
-Fase 4 — Construye dataset/final/dataset.json (~4k–6k filas) y split train/val/test.
-
-Fuentes:
-  - dataset/processed/labeled.json  (SO + nivel/urgencia/dominio vía Copilot; sin emoción)
-  - dataset/processed/goemotions_mapped.json  (texto + emocion_synapse)
-
-Emoción en filas SO: heurística por palabras clave (documentada en código). No sustituye
-un etiquetado LLM de emoción si lo añadís después: podéis fusionar otro JSON con prioridad.
-
-Uso (desde la raíz del repo):
-  python dataset/scripts/build_final_dataset.py --target-rows 5000 --seed 42
-
-Opcional:
-  --no-split     solo escribe dataset.json (no train/val/test)
-  --min-per-emotion 220   suelo mínimo por emoción al muestrear GoEmotions
-"""
-
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
-import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from training_labels import EMOCION, NIVEL_TECNICO, URGENCIA
-
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
+NN_SCRIPT_DIR = PROJECT_ROOT / "neural_network" / "scripts"
+import sys
+if str(NN_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(NN_SCRIPT_DIR))
+
+from training_labels import DOMINIO, EMOCION, HEAD_KEYS, NIVEL_TECNICO, URGENCIA
+
 PROCESSED_DIR = PROJECT_ROOT / "dataset" / "processed"
 FINAL_DIR = PROJECT_ROOT / "dataset" / "final"
+DEFAULT_EXTRA_SYNTHETIC = PROCESSED_DIR / "so_like_synthetic.json"
 
-_WS = re.compile(r"\s+")
+ACTIVE_DOMAINS_FINAL: Tuple[str, ...] = tuple(DOMINIO)
+SYNTHETIC_FUENTE_FINAL = "synthetic_programming_final"
+
+DOMAIN_MAP_FINAL = {
+    "backend": "backend",
+    "frontend": "frontend",
+    "bases_de_datos": "bases_de_datos",
+    "movil": "movil",
+    "devops": "devops",
+    "data_science": "data_science",
+    "seguridad": "sistemas_seguridad",
+    "sistemas": "sistemas_seguridad",
+    "sistemas_seguridad": "sistemas_seguridad",
+    "algoritmos": "general",
+    "ingenieria_software": "general",
+    "general": "general",
+}
+
+_TOKEN_RE = re.compile(r"\s+")
+_LEAKED_LABEL_RE = re.compile(
+    r"(?:\n|\s)*(?:etiquetas:\s*)?"
+    r"(?:nivel_tecnico|urgencia|emocion|dominio)\s*[:=]\s*[^,\n]+"
+    r"(?:[,\s]+(?:nivel_tecnico|urgencia|emocion|dominio)\s*[:=]\s*[^,\n]+)*\s*$",
+    flags=re.IGNORECASE,
+)
+_LEAKED_TAGS_LABEL_RE = re.compile(
+    r"(?:\n|\s)*tags:\s*"
+    r"(?:nivel_tecnico|urgencia|emocion|dominio)\s*[:=][\s\S]*$",
+    flags=re.IGNORECASE,
+)
+_LEAKED_LABEL_PREFIX_RE = re.compile(
+    r"^\s*(?:etiquetas:\s*)?"
+    r"(?:nivel_tecnico|urgencia|emocion|dominio)\s*[:=]\s*[^|\n,]+"
+    r"(?:\s*[|,]\s*(?:nivel_tecnico|urgencia|emocion|dominio)\s*[:=]\s*[^|\n,]+)*"
+    r"\s*\n+",
+    flags=re.IGNORECASE,
+)
 
 
-def normalize_text(s: str) -> str:
-    t = s.strip().lower()
-    t = _WS.sub(" ", t)
-    return t[:2000]
+def normalize_text(text: str) -> str:
+    return _TOKEN_RE.sub(" ", str(text).strip().lower())
 
 
-def texto_from_so_row(row: Dict[str, Any]) -> str:
+def strip_leaked_label_footer(text: str) -> str:
+    stripped = _LEAKED_LABEL_PREFIX_RE.sub("", str(text or "").strip()).strip()
+    stripped = _LEAKED_TAGS_LABEL_RE.sub("", stripped).strip()
+    cleaned_lines = []
+    label_keys = ("nivel_tecnico", "urgencia", "emocion", "dominio")
+    for line in stripped.splitlines():
+        normalized = line.lower()
+        key_hits = sum(1 for key in label_keys if key in normalized)
+        if key_hits >= 2 and (":" in line or "=" in line):
+            continue
+        if normalized.strip().startswith("etiquetas:"):
+            continue
+        cleaned_lines.append(line)
+    stripped = "\n".join(cleaned_lines).strip()
+    return _LEAKED_LABEL_RE.sub("", stripped).strip()
+
+
+def normalize_domain_final(domain: Any) -> str:
+    raw = str(domain or "general").strip()
+    return DOMAIN_MAP_FINAL.get(raw, "general")
+
+
+def supervision_all() -> Dict[str, bool]:
+    return {h: True for h in HEAD_KEYS}
+
+
+def supervision_goe_emotion_only() -> Dict[str, bool]:
+    return {h: h == "emocion" for h in HEAD_KEYS}
+
+
+def label_or_none(row: Dict[str, Any], head: str) -> Optional[str]:
+    value = row.get(head)
+    if head == "dominio" and (value is None or not str(value).strip()):
+        value = row.get("domain_synapse")
+    if value is None:
+        return None
+    value = str(value).strip()
+    return value or None
+
+
+def is_supervised(row: Dict[str, Any], head: str) -> bool:
+    sup = row.get("supervision")
+    if not isinstance(sup, dict):
+        return True
+    return bool(sup.get(head, True))
+
+
+def infer_emotion_from_text(text: str) -> str:
+    t = text.lower()
+    if any(x in t for x in ("urgente", "examen", "entrega", "produccion", "producción", "deadline")):
+        return "ansiedad"
+    if any(x in t for x in ("no entiendo", "confus", "perdid", "no se", "no sé")):
+        return "confusion"
+    if any(x in t for x in ("error", "no funciona", "falla", "frustr", "harto")):
+        return "frustracion"
+    if any(x in t for x in ("como funciona", "cómo funciona", "por que", "por qué", "diferencia")):
+        return "curiosidad"
+    if any(x in t for x in ("gracias", "logre", "logré", "funciono", "funcionó")):
+        return "motivacion"
+    return "neutral"
+
+
+def so_text(row: Dict[str, Any]) -> str:
     title = str(row.get("title") or "").strip()
     body = str(row.get("body") or "").strip()
     if title and body:
         return f"{title}\n{body}"
-    return title or body
+    return title or body or str(row.get("texto") or "").strip()
 
 
-def infer_emocion_so(text: str) -> str:
-    """Heurística barata para SO sin etiqueta de emoción (orden de prioridad)."""
-    t = text.lower()
-    if any(
-        w in t
-        for w in (
-            "desesperad",
-            "rindo",
-            "imposible",
-            "no puedo más",
-            "no puedo mas",
-            "me rindo",
-        )
-    ):
-        return "desesperado"
-    if any(
-        w in t
-        for w in (
-            "urgente",
-            "examen",
-            "entrega",
-            "deadline",
-            "hoy mismo",
-            "contrarreloj",
-            "para mañana",
-            "en una hora",
-        )
-    ):
-        return "ansiedad"
-    if any(
-        w in t
-        for w in (
-            "no entiendo",
-            "no entiendo nada",
-            "confus",
-            "perdid",
-            "qué es esto",
-            "que es esto",
-            "no sé qué",
-            "no se que",
-        )
-    ):
-        return "confusion"
-    if any(
-        w in t
-        for w in (
-            "frustr",
-            "molest",
-            "no funciona",
-            "error",
-            "odia",
-            "cansad",
-            "harto",
-            "hartos",
-        )
-    ):
-        return "frustracion"
-    if any(
-        w in t
-        for w in (
-            "por qué",
-            "porque",
-            "cómo funciona",
-            "como funciona",
-            "curios",
-            "diferencia entre",
-            "interesante",
-        )
-    ):
-        return "curiosidad"
-    if any(
-        w in t
-        for w in (
-            "genial",
-            "funcionó",
-            "funciono",
-            "gracias",
-            "perfecto",
-            "ya quedó",
-            "ya quedo",
-            "listo gracias",
-        )
-    ):
-        return "motivacion"
-    if any(w in t for w in ("demasiado", "abrum", "muchísima", "muchisima", "overflow")):
-        return "abrumado"
-    if any(w in t for w in ("seguro que", "creo que está bien", "creo que esta bien")):
-        return "confiado"
-    return "neutral"
-
-
-_INTERMEDIO_HINT = (
-    "import ",
-    "def ",
-    "class ",
-    "function",
-    "json",
-    "api",
-    "endpoint",
-    "axios",
-    "fetch",
-    "react",
-    "sql",
-    "query",
-    "git ",
-    "docker",
-    "npm",
-    "stack trace",
-    "traceback",
-    "error:",
-    "exception",
-    "nullpointer",
-    "segmentation fault",
-    "typescript",
-    "javascript",
-    "async ",
-    "await ",
-    "promise",
-    "callback",
-    "middleware",
-    "controller",
-    "repository",
-    "orm",
-    "crud",
-    "jwt",
-    "oauth",
-    "websocket",
-    "graphql",
-    "rest ",
-    "http ",
-    "status code",
-    "pytest",
-    "junit",
-    "maven",
-    "gradle",
-)
-
-
-_INTERMEDIO_ES = (
-    "función",
-    "funcion",
-    "variable",
-    "bucle",
-    "for ",
-    "while ",
-    " if ",
-    "else:",
-    "código",
-    "codigo",
-    "proyecto",
-    "clase ",
-    "método",
-    "metodo",
-    "herencia",
-    "interfaz",
-    "polimorf",
-    "error ",
-    "excepción",
-    "excepcion",
-    "array",
-    "lista enlazada",
-    "vector",
-    "matriz",
-    "ordenar",
-    "buscar",
-    "recurs",
-    "librería",
-    "libreria",
-    "framework",
-    "django",
-    "flask",
-    "spring",
-    "node",
-    "php",
-    "laravel",
-    "base de datos",
-    "consulta sql",
-    " select ",
-    " join ",
-    "html",
-    "css",
-    "android",
-    "kotlin",
-    "swift",
-    "gradle",
-    "maven",
-    "visual studio",
-    "vscode",
-    "intellij",
-    "eclipse",
-)
-
-_AVANZADO_ES = (
-    "grafos",
-    "árbol binario",
-    "arbol binario",
-    "dijkstra",
-    "bellman",
-    "floyd",
-    "programación dinámica",
-    "programacion dinamica",
-    "memoiz",
-    "complejidad o(",
-    "big omega",
-    "teorema maestro",
-    "análisis amortizado",
-    "analisis amortizado",
-    "cola de prioridad",
-    "montículo",
-    "monticulo",
-    "tabla hash",
-    "resolución de colisiones",
-    "red neuronal",
-    "backprop",
-    "retropropag",
-    "descenso de gradiente",
-    "tensor",
-    "cuda",
-    "kernel gpu",
-    "hilos posix",
-    "pthread",
-    "semáforo",
-    "semaforo",
-    "spinlock",
-    "planificador del kernel",
-    "llamada al sistema",
-    "syscall",
-    "tlb",
-    "tabla de páginas",
-    "page fault",
-    "violación de segmentación",
-    "puntero colgante",
-    "use after free",
-    "double free",
-    "race condition",
-    "condición de carrera",
-    "deadlock",
-    "interbloqueo",
-    "serializabilidad",
-    "aislamiento sql",
-    "mvcc",
-    "índice compuesto",
-    "indice compuesto",
-    "plan de ejecución",
-    "explain ",
-    "particionamiento",
-    "sharding",
-    "replicación",
-    "quorum",
-    "raft",
-    "paxos",
-    "consenso distrib",
-    "grpc",
-    "protobuf",
-    "zero copy",
-    "rdma",
-    "io_uring",
-    "bpf",
-    "ebpf",
-    "wasm",
-    "llvm",
-    "ssa ",
-    "optimización de compiladores",
-    "llvm ir",
-)
-
-_AVANZADO_WEAK = (
-    "algoritmo",
-    "complejidad",
-    "optimización",
-    "optimizacion",
-    "heurística",
-    "heuristica",
-    "probabilíst",
-    "probabilistic",
-    "estocástic",
-    "asintótica",
-    "asintotica",
-    "np-",
-    "p vs np",
-    "reducción",
-    "reduccion",
-    "invariante",
-    "correctitud",
-    "demostración",
-    "demostracion",
-    "inducción",
-    "microservicios",
-    "event sourcing",
-    "cqrs",
-    "two-phase commit",
-    "consistencia eventual",
-    "vectorización",
-    "vectorizacion",
-    "cache line",
-    "false sharing",
-    "branch prediction",
-    "pipeline",
-    "machine learning",
-    "deep learning",
-    "embedding",
-    "overfitting",
-    "regularización",
-    "regularizacion",
-    "función objetivo",
-    "funcion objetivo",
-    "cross entropy",
-    "quicksort",
-    "mergesort",
-    "heapsort",
-    "ordenación rápida",
-    "ordenacion rapida",
-    "búsqueda binaria",
-    "busqueda binaria",
-    "divide y vencer",
-    "método de newton",
-    "metodo de newton",
-    "regresión logística",
-    "regresion logistica",
-    "validación cruzada",
-    "validacion cruzada",
-    "k-fold",
-    "margen máximo",
-    "margen maximo",
-    "kernel rbf",
-)
-
-_AVANZADO_ACADEMIA = (
-    " grado en inform",
-    "ingeniería inform",
-    "ingenieria inform",
-    "máster en",
-    "master en",
-    "doctorado",
-    "tesis doctoral",
-    " paper ",
-    " arxiv",
-    "peer review",
-    " proceedings",
-    " revista científica",
-    " revista cientifica",
-    " congreso internacional",
-    "publicación científica",
-    "publicacion cientifica",
-    "investigación operativa",
-    "investigacion operativa",
-    "optimización combinatoria",
-    "optimizacion combinatoria",
-    "programación lineal entera",
-    "programacion lineal entera",
-    "problema np",
-    "clase ptime",
-    "reducción polinomial",
-    "reduccion polinomial",
-)
-
-
-def infer_nivel_goe(text: str) -> str:
-    """Heurística léxica para GoEmotions (solo texto; sin etiqueta humana de nivel)."""
-    t = text.lower()
-    avanzado = (
-        "big o",
-        "big-o",
-        "complejidad",
-        "optimiz",
-        "concurrencia",
-        "paralel",
-        "multihilo",
-        "mutex",
-        "deadlock",
-        "race condition",
-        "data race",
-        "kubernetes",
-        "k8s",
-        "microservic",
-        "distribuid",
-        "consenso raft",
-        "paxos",
-        "quorum",
-        "lineariz",
-        "serializ",
-        "mvcc",
-        "lsm",
-        "bloom filter",
-        "merkle",
-        "vector clock",
-        "exactly-once",
-        "idempot",
-        "backpressure",
-        "circuit breaker",
-        "saga pattern",
-        "outbox pattern",
-        "hexagonal",
-        "ddd",
-        "bounded context",
-        "llvm",
-        "wasm",
-        "simd",
-        "lock-free",
-        "compare-and-swap",
-        "aba problem",
-        "page table",
-        "tlb",
-        "numa",
-        "write amplification",
-        "cap theorem",
-        "sharding",
-        "split brain",
-        "gc pause",
-        "zgc",
-        "shenandoah",
-        "jemalloc",
-        "tcmalloc",
-        "memory barrier",
-        "memory order",
-        "std::move",
-        "perfect forwarding",
-        "template metaprogram",
-        "type trait",
-        "concepts c++",
-        "constexpr",
-        "coroutine c++",
-        "async rust",
-        "borrow checker",
-        "lifetime elision",
-        "unsafe rust",
-        "pin types",
-        "reactor pattern",
-        "proactor",
-        "io_uring",
-        "epoll",
-        "kqueue",
-        "zero-copy",
-        "kernel bypass",
-        "dpdk",
-        "rdma",
-        "gpu kernel",
-        "cuda core",
-        "tensor core",
-        "mixed precision",
-        "gradient checkpoint",
-        "fsdp",
-        "tensor parallel",
-        "pipeline parallel",
-        "implementación de un parser",
-        "recursive descent",
-        "ll parser",
-        "lr parser",
-        "automata finito",
-        "turing completo",
-        "np-completo",
-        "reducción polinomial",
-        "reduccion polinomial",
-        "proof assistant",
-        "teorema de rice",
-        "halting problem",
-    )
-    if any(w in t for w in avanzado) or any(w in t for w in _AVANZADO_ES):
-        return "avanzado"
-    weak_hits = sum(1 for w in _AVANZADO_WEAK if w in t)
-    if len(t) >= 85 and weak_hits >= 2:
-        return "avanzado"
-    if len(t) >= 120 and weak_hits >= 1:
-        return "avanzado"
-    if len(t) >= 70 and any(w in t for w in _AVANZADO_ACADEMIA):
-        return "avanzado"
-    if any(w in t for w in _INTERMEDIO_ES) or any(w in t for w in _INTERMEDIO_HINT):
-        return "intermedio"
-    if len(t) < 72:
-        return "principiante"
-    if len(t) < 110 and any(
-        w in t
-        for w in (
-            "primer programa",
-            "primera vez",
-            "nunca he programado",
-            "no sé nada",
-            "no se nada",
-            "muy básico",
-            "muy basico",
-            "desde cero",
-            "tutorial paso",
-            "instalar python",
-            "instalar java",
-            "qué es una variable",
-            "que es una variable",
-            "qué es un array",
-            "que es un for",
-            "no entiendo el if",
-            "tarea de la universidad",
-            "profe nos mandó",
-            "profe nos mando",
-            "estoy empezando",
-            "empecé ayer",
-            "empece ayer",
-            "me pueden explicar como",
-            "me pueden explicar cómo",
-            "ayuda urgente soy nuevo",
-        )
-    ):
-        return "principiante"
-    return "intermedio"
-
-
-def infer_urgencia_goe(text: str) -> str:
-    t = text.lower()
-    exc = t.count("!")
-    if exc >= 2:
-        return "alta"
-    alta = (
-        "urgente",
-        "urgencia",
-        "examen mañana",
-        "entrega hoy",
-        "deadline",
-        "contrarreloj",
-        "bloqueado",
-        "bloqueada",
-        "bloqueo total",
-        "no compila y entrego",
-        "producción caída",
-        "produccion caida",
-        "caída en prod",
-        "incidente sev",
-        "p0",
-        "p1",
-        "hotfix",
-        "rollback ya",
-        "data loss",
-        "pérdida de datos",
-        "perdida de datos",
-        "acabo de borrar",
-        "sin backup",
-        "hoy mismo",
-        "en dos horas",
-        "no arranca el servidor",
-        "caído el servicio",
-    )
-    if any(w in t for w in alta):
-        return "alta"
-    baja = (
-        "solo curios",
-        "por aprender",
-        "sin prisa",
-        "cuando puedas",
-        "cuando tengas tiempo",
-        "duda teórica",
-        "duda teorica",
-        "para leer tranquilo",
-        "algún día me gustaría",
-        "algun dia me gustaria",
-        "no es para nada urgente",
-        "reflexión sobre",
-        "reflexion sobre",
-        "debate filosófico",
-        "debate filosofico",
-        "a largo plazo",
-        "en un futuro",
-    )
-    if any(w in t for w in baja):
-        return "baja"
-    if len(t) < 55 and "?" in t and not any(w in t for w in alta):
-        return "baja"
-    return "media"
-
-
-def so_row_to_example(row: Dict[str, Any]) -> Dict[str, Any]:
-    texto = texto_from_so_row(row)
-    emo = infer_emocion_so(texto)
-    dom = str(row.get("domain_synapse") or row.get("dominio") or "general").strip()
-    if dom not in {
-        "backend",
-        "frontend",
-        "devops",
-        "algoritmos",
-        "bases_de_datos",
-        "movil",
-        "data_science",
-        "seguridad",
-        "sistemas",
-        "ingenieria_software",
-        "general",
-    }:
-        dom = "general"
-    out: Dict[str, Any] = {
-        "texto": texto,
-        "nivel_tecnico": str(row.get("nivel_tecnico") or "intermedio").strip(),
-        "urgencia": str(row.get("urgencia") or "media").strip(),
-        "emocion": emo,
-        "dominio": dom,
-        "fuente": "so_es",
-        "source_id": f"so:{row.get('question_id', '')}",
-    }
-    return out
-
-
-def goe_row_to_example(row: Dict[str, Any]) -> Dict[str, Any]:
-    texto = str(row.get("text") or "").strip()
-    emo = str(row.get("emocion_synapse") or "neutral").strip()
-    if emo not in EMOCION:
-        emo = "neutral"
+def so_to_final_example(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    text = so_text(row)
+    if not text:
+        return None
+    nivel = str(row.get("nivel_tecnico") or "intermedio").strip()
+    urgencia = str(row.get("urgencia") or "media").strip()
+    emocion = str(row.get("emocion") or infer_emotion_from_text(text)).strip()
+    dominio = normalize_domain_final(row.get("dominio") or row.get("domain_synapse"))
+    if nivel not in NIVEL_TECNICO:
+        nivel = "intermedio"
+    if urgencia not in URGENCIA:
+        urgencia = "media"
+    if emocion not in EMOCION:
+        emocion = infer_emotion_from_text(text)
     return {
-        "texto": texto,
-        "nivel_tecnico": infer_nivel_goe(texto),
-        "urgencia": infer_urgencia_goe(texto),
-        "emocion": emo,
-        "dominio": "general",
-        "fuente": "goemotions_es",
-        "source_id": f"goe:{row.get('id', '')}",
-        "emocion_original_goemotions": row.get("emocion_goemotions"),
+        "texto": text,
+        "nivel_tecnico": nivel,
+        "urgencia": urgencia,
+        "emocion": emocion,
+        "dominio": dominio,
+        "fuente": "so_es",
+        "source_id": f"so:{row.get('question_id') or row.get('source_id') or ''}",
+        "supervision": supervision_all(),
     }
 
 
-_NIVEL_TARGET_RATIO: Dict[str, float] = {
-    "principiante": 0.34,
-    "intermedio": 0.46,
-    "avanzado": 0.20,
+def goe_to_final_example(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    text = str(row.get("text") or row.get("texto") or "").strip()
+    if len(text) < 8:
+        return None
+    emocion = str(row.get("emocion_synapse") or row.get("emocion") or "neutral").strip()
+    if emocion not in EMOCION:
+        emocion = "neutral"
+    return {
+        "texto": text,
+        "nivel_tecnico": None,
+        "urgencia": None,
+        "emocion": emocion,
+        "dominio": None,
+        "fuente": "goemotions_es",
+        "source_id": f"goe:{row.get('id') or row.get('source_id') or ''}",
+        "emocion_original_goemotions": row.get("emocion_goemotions"),
+        "supervision": supervision_goe_emotion_only(),
+    }
+
+
+DOMAIN_TOPICS = {
+    "backend": ("API REST", "Django", "Node.js", "autenticacion", "colas de trabajo"),
+    "frontend": ("React", "CSS", "estado de componentes", "formularios", "renderizado"),
+    "bases_de_datos": ("SQL", "PostgreSQL", "indices", "joins", "migraciones"),
+    "movil": ("Flutter", "Android", "notificaciones", "ciclo de vida", "permisos"),
+    "devops": ("Docker", "Kubernetes", "CI/CD", "Nginx", "variables de entorno"),
+    "data_science": ("pandas", "scikit-learn", "normalizacion", "metricas", "features"),
+    "sistemas_seguridad": ("Linux", "concurrencia", "JWT", "permisos", "threads"),
+    "general": ("programacion", "depuracion", "estructura del proyecto", "buenas practicas", "testing"),
 }
-_URG_TARGET_RATIO: Dict[str, float] = {"baja": 0.24, "media": 0.46, "alta": 0.30}
+
+EMOTION_STYLE = {
+    "frustracion": ("ya probe varias alternativas y el fallo se repite", "me esta costando aislar la causa"),
+    "confusion": ("no tengo claro que parte del flujo estoy interpretando mal", "me pierdo al conectar los conceptos"),
+    "curiosidad": ("quiero entender el motivo tecnico antes de decidir", "me interesa comparar las opciones"),
+    "ansiedad": ("esto bloquea una entrega cercana", "necesito destrabarlo con prioridad"),
+    "motivacion": ("ya avance y quiero dejarlo mejor estructurado", "quiero aprovechar para hacerlo bien"),
+    "abrumado": ("hay demasiadas rutas posibles y no se cual elegir", "la cantidad de conceptos me esta saturando"),
+    "confiado": ("creo que el enfoque general es correcto", "tengo una hipotesis pero quiero validarla"),
+    "desesperado": ("llevo mucho tiempo intentando y no logro avanzar", "cada cambio abre otro error distinto"),
+    "neutral": ("busco una explicacion clara con un ejemplo", "quiero una respuesta directa y verificable"),
+}
+
+LEVEL_STYLE = {
+    "principiante": ("necesito una explicacion paso a paso", "todavia estoy afianzando los fundamentos"),
+    "intermedio": ("ya tengo una implementacion parcial", "puedo seguir codigo si me explican el criterio"),
+    "avanzado": ("quiero analizar rendimiento, concurrencia o arquitectura", "me preocupan los efectos borde y la mantenibilidad"),
+}
+
+URGENCY_STYLE = {
+    "baja": ("puedo revisarlo con calma", "no es bloqueante ahora mismo"),
+    "media": ("quisiera resolverlo durante esta sesion", "me esta frenando el avance del dia"),
+    "alta": ("bloquea una entrega o despliegue", "necesito una ruta de solucion pronto"),
+}
 
 
-def integer_targets(total: int, labels: Tuple[str, ...], ratios: Dict[str, float]) -> Dict[str, int]:
-    labs = list(labels)
-    raw = [total * ratios[l] for l in labs]
-    flo = [int(x) for x in raw]
-    rem = total - sum(flo)
-    order = sorted(range(len(labs)), key=lambda i: raw[i] - flo[i], reverse=True)
-    for k in range(rem):
-        flo[order[k % len(labs)]] += 1
-    return {labs[i]: flo[i] for i in range(len(labs))}
+APP_CONTEXTS = (
+    "un panel administrativo", "una app de cursos", "un modulo de pagos", "un dashboard interno",
+    "una API publica", "un sistema de inventario", "una practica universitaria", "un prototipo movil",
+    "una tarea de simulacion", "un flujo de autenticacion", "una pantalla de reportes", "un job programado",
+    "una integracion con terceros", "un formulario dinamico", "una migracion de datos", "un servicio de notificaciones",
+    "un entorno de pruebas", "un despliegue pequeño", "una libreria compartida", "un repositorio heredado",
+    "una consulta recurrente", "un componente reutilizable", "un endpoint nuevo", "una tarea de mantenimiento",
+    "un pipeline de datos", "una vista responsive", "un monitor de errores", "una configuracion local",
+    "un caso de permisos", "una coleccion de pruebas", "un flujo asincrono",
+)
+
+TECH_CONSTRAINTS = (
+    "con pocos archivos", "sin cambiar demasiado la estructura", "manteniendo compatibilidad",
+    "con logs incompletos", "con ejemplos pequenos", "sin depender de servicios externos",
+    "cuidando los tiempos de respuesta", "con datos de prueba limitados", "evitando repetir codigo",
+    "con validaciones estrictas", "sin romper lo que ya funciona", "con nombres poco claros",
+    "con varias capas involucradas", "desde una rama de trabajo", "con errores intermitentes",
+    "pensando en una entrega academica", "con configuracion compartida", "usando una version reciente",
+    "con documentacion escasa", "con cambios minimos", "comparando dos alternativas",
+    "probando primero en local", "revisando una traza larga", "con entradas de usuario",
+    "con datos en espanol", "buscando una solucion reproducible", "separando responsabilidades",
+    "con una restriccion de tiempo", "sin perder legibilidad", "con varios casos borde",
+    "optimizando solo lo necesario", "con dependencias ya instaladas", "a partir de codigo existente",
+)
+
+SYNTHETIC_FAMILIES = (
+    "short_question",
+    "error_context",
+    "academic_assignment",
+    "production_bug",
+    "conceptual_explanation",
+    "comparison",
+    "refactor_review",
+    "debugging_trace",
+    "architecture_decision",
+    "minimal_repro",
+)
 
 
-def emotion_target_counts(n: int) -> Dict[str, int]:
-    r = 1.0 / len(EMOCION)
-    return integer_targets(n, EMOCION, {e: r for e in EMOCION})
+def _pick(options: Tuple[str, ...], i: int, salt: int) -> str:
+    return options[(i + salt) % len(options)]
 
 
-def count_dims(rows: List[Dict[str, Any]]) -> Tuple[Counter, Counter, Counter]:
-    cn: Counter = Counter()
-    cu: Counter = Counter()
-    ce: Counter = Counter()
-    for r in rows:
-        cn[str(r.get("nivel_tecnico", ""))] += 1
-        cu[str(r.get("urgencia", ""))] += 1
-        ce[str(r.get("emocion", ""))] += 1
-    return cn, cu, ce
+def synthetic_text(i: int, nivel: str, urgencia: str, emocion: str, dominio: str, family: str) -> str:
+    topic = _pick(DOMAIN_TOPICS[dominio], i, 3)
+    level = _pick(LEVEL_STYLE[nivel], i // 3, 5)
+    urgency = _pick(URGENCY_STYLE[urgencia], i // 5, 7)
+    emotion = _pick(EMOTION_STYLE[emocion], i // 7, 11)
+    app_context = _pick(APP_CONTEXTS, i, 13)
+    constraint = _pick(TECH_CONSTRAINTS, i // 2, 17)
+    tail = f"El contexto es {app_context}, {constraint}."
+    if family == "short_question":
+        return f"Tengo una duda de {dominio} con {topic}: {level}. {emotion}. {urgency}. {tail}"
+    if family == "error_context":
+        return f"Al trabajar con {topic} en {dominio}, aparece un comportamiento inesperado. {level}; {emotion}. {urgency}. {tail}"
+    if family == "academic_assignment":
+        return f"Para una practica necesito explicar {topic} dentro de {dominio}. {level}. {emotion}, y {urgency}. {tail}"
+    if family == "production_bug":
+        return f"En un flujo parecido a produccion, {topic} empezo a fallar en {dominio}. {urgency}. {emotion}. {level}. {tail}"
+    if family == "conceptual_explanation":
+        return f"Quiero entender como se relaciona {topic} con {dominio}. {level}; {emotion}. {urgency}. {tail}"
+    if family == "comparison":
+        return f"Estoy comparando dos enfoques para {topic} en {dominio}. {level}. {emotion}. {urgency}. {tail}"
+    if family == "refactor_review":
+        return f"Estoy revisando una solucion de {dominio} basada en {topic}. {level}; {urgency}; {emotion}. {tail}"
+    if family == "debugging_trace":
+        return f"Tengo trazas y sintomas alrededor de {topic} en {dominio}. {emotion}. {level}. {urgency}. {tail}"
+    if family == "architecture_decision":
+        return f"Debo decidir como organizar {topic} en un proyecto de {dominio}. {level}. {emotion}. {urgency}. {tail}"
+    return f"Necesito un ejemplo minimo sobre {topic} en {dominio}. {level}. {urgency}. {emotion}. {tail}"
 
 
-def bucket_priority(
-    emo: str,
-    n: str,
-    u: str,
-    cn: Counter,
-    cu: Counter,
-    ce: Counter,
-    Tn: Dict[str, int],
-    Tu: Dict[str, int],
-    Te: Dict[str, int],
-    min_per_emotion: int,
-) -> float:
-    dn = max(0, Tn.get(n, 0) - cn[n]) / max(Tn.get(n, 1), 1)
-    du = max(0, Tu.get(u, 0) - cu[u]) / max(Tu.get(u, 1), 1)
-    de = max(0, Te.get(emo, 0) - ce[emo]) / max(Te.get(emo, 1), 1)
-    if ce[emo] < min(min_per_emotion, Te.get(emo, min_per_emotion)):
-        de += 3.0
-    return dn * 1.15 + du * 1.15 + de * 1.0
+def generate_balanced_synthetic_rows(target_rows: int, seed: int = 42) -> List[Dict[str, Any]]:
+    rng = random.Random(seed)
+    niveles = list(NIVEL_TECNICO)
+    urgencias = list(URGENCIA)
+    emociones = list(EMOCION)
+    dominios = list(ACTIVE_DOMAINS_FINAL)
+    rows: List[Dict[str, Any]] = []
+    offsets = [rng.randrange(10_000) for _ in range(5)]
+    for i in range(max(0, target_rows)):
+        nivel = niveles[(i + offsets[0]) % len(niveles)]
+        urgencia = urgencias[((i // len(niveles)) + offsets[1]) % len(urgencias)]
+        dominio = dominios[(i + offsets[3]) % len(dominios)]
+        emocion = emociones[((i // len(dominios)) + offsets[2]) % len(emociones)]
+        family = SYNTHETIC_FAMILIES[(i + offsets[4]) % len(SYNTHETIC_FAMILIES)]
+        rows.append(
+            {
+                "texto": synthetic_text(i, nivel, urgencia, emocion, dominio, family),
+                "nivel_tecnico": nivel,
+                "urgencia": urgencia,
+                "emocion": emocion,
+                "dominio": dominio,
+                "fuente": SYNTHETIC_FUENTE_FINAL,
+                "source_id": f"syn:final:{seed}:{i}",
+                "emocion_source_so": "curated_synthetic_final",
+                "synthetic_provenance": {"generator": "diverse_template_final", "seed": seed, "index": i, "family": family},
+                "supervision": supervision_all(),
+            }
+        )
+    return rows
 
 
-def select_goemotions_balanced(
-    goe_rows: List[Dict[str, Any]],
-    used_keys: Set[str],
-    budget: int,
-    rng,
-    min_per_emotion: int,
-    so_examples: List[Dict[str, Any]],
-    total_target: int,
-) -> List[Dict[str, Any]]:
-    """Muestrea GoEmotions hacia `budget` filas priorizando déficit vs objetivos globales (N total)."""
-    if budget <= 0:
-        return []
-
-    Tn = integer_targets(total_target, NIVEL_TECNICO, _NIVEL_TARGET_RATIO)
-    Tu = integer_targets(total_target, URGENCIA, _URG_TARGET_RATIO)
-    Te = emotion_target_counts(total_target)
-
-    cn, cu, ce = count_dims(so_examples)
-
-    buckets: Dict[Tuple[str, str, str], List[Dict[str, Any]]] = defaultdict(list)
-    by_nu: Dict[Tuple[str, str], List[Dict[str, Any]]] = defaultdict(list)
-    for r in goe_rows:
-        texto = str(r.get("text") or "").strip()
-        if len(texto) < 15:
+def dedupe_rows(rows: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    seen = set()
+    out = []
+    for row in rows:
+        text = str(row.get("texto") or "").strip()
+        if not text:
             continue
-        key = normalize_text(texto)
-        if key in used_keys:
+        key = normalize_text(text)
+        if key in seen:
             continue
-        emo = str(r.get("emocion_synapse") or "neutral")
-        if emo not in EMOCION:
-            emo = "neutral"
-        n = infer_nivel_goe(texto)
-        u = infer_urgencia_goe(texto)
-        if n not in NIVEL_TECNICO:
-            n = "intermedio"
-        if u not in URGENCIA:
-            u = "media"
-        buckets[(emo, n, u)].append(r)
-        by_nu[(n, u)].append(r)
-
-    for lst in buckets.values():
-        rng.shuffle(lst)
-    for lst in by_nu.values():
-        rng.shuffle(lst)
-
-    picked: List[Dict[str, Any]] = []
-    bucket_keys = list(buckets.keys())
-    nu_keys = [(n, u) for n in NIVEL_TECNICO for u in URGENCIA]
-
-    def register(ex: Dict[str, Any]) -> None:
-        nonlocal cn, cu, ce
-        cn[ex["nivel_tecnico"]] += 1
-        cu[ex["urgencia"]] += 1
-        ce[ex["emocion"]] += 1
-
-    while len(picked) < budget:
-        best_k: Optional[Tuple[str, str, str]] = None
-        best_s = -1.0
-        for bk in bucket_keys:
-            lst = buckets[bk]
-            if not lst:
-                continue
-            emo, n, u = bk
-            s = bucket_priority(emo, n, u, cn, cu, ce, Tn, Tu, Te, min_per_emotion)
-            if s > best_s:
-                best_s = s
-                best_k = bk
-        if best_k is None or best_s < 1e-6:
-            break
-
-        row = buckets[best_k].pop()
-        key = normalize_text(str(row.get("text") or ""))
-        if key in used_keys:
-            continue
-        used_keys.add(key)
-        ex = goe_row_to_example(row)
-        picked.append(ex)
-        register(ex)
-
-    while len(picked) < budget:
-        best_nu: Optional[Tuple[str, str]] = None
-        best_snu = -1.0
-        for nu in nu_keys:
-            lst = by_nu[nu]
-            if not lst:
-                continue
-            n, u = nu
-            dn = max(0, Tn.get(n, 0) - cn[n]) / max(Tn.get(n, 1), 1)
-            du = max(0, Tu.get(u, 0) - cu[u]) / max(Tu.get(u, 1), 1)
-            s = dn + du
-            if s > best_snu:
-                best_snu = s
-                best_nu = nu
-        if best_nu is None or best_snu < 1e-6:
-            break
-        progressed = False
-        while by_nu[best_nu] and len(picked) < budget:
-            row = by_nu[best_nu].pop()
-            key = normalize_text(str(row.get("text") or ""))
-            if key in used_keys:
-                continue
-            used_keys.add(key)
-            ex = goe_row_to_example(row)
-            picked.append(ex)
-            register(ex)
-            progressed = True
-            break
-        if not progressed:
-            break
-
-    if len(picked) < budget:
-        tail: List[Dict[str, Any]] = []
-        for nu in nu_keys:
-            tail.extend(by_nu[nu])
-        rng.shuffle(tail)
-        for r in tail:
-            if len(picked) >= budget:
-                break
-            key = normalize_text(str(r.get("text") or ""))
-            if key in used_keys:
-                continue
-            used_keys.add(key)
-            ex = goe_row_to_example(r)
-            picked.append(ex)
-            register(ex)
-
-    return picked
-
-
-def augment_so_examples(
-    so_examples: List[Dict[str, Any]], used_keys: Set[str], need: int, rng
-) -> List[Dict[str, Any]]:
-    """Duplica textos SO con sufijos neutros (misma etiqueta) para llegar al tamaño objetivo."""
-    suffixes = [
-        "",
-        "\n\n(Contexto: proyecto académico.)",
-        "\n\n(Soy estudiante y busco una explicación clara.)",
-        "\n\n(Gracias de antemano.)",
-    ]
-    out: List[Dict[str, Any]] = []
-    pool = list(so_examples)
-    rng.shuffle(pool)
-    i = 0
-    while len(out) < need and pool:
-        base = pool[i % len(pool)]
-        i += 1
-        suf = suffixes[rng.randint(0, len(suffixes) - 1)]
-        texto = base["texto"] + suf
-        key = normalize_text(texto)
-        if key in used_keys:
-            continue
-        used_keys.add(key)
-        row = {k: v for k, v in base.items() if k != "source_id"}
-        row["texto"] = texto
-        row["fuente"] = "so_es_aug"
-        row["source_id"] = (base.get("source_id") or "so:?") + f":aug{len(out)}"
+        seen.add(key)
         out.append(row)
     return out
 
 
-def dim_counts(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
-    out: Dict[str, Counter] = {
-        "nivel_tecnico": Counter(),
-        "urgencia": Counter(),
-        "emocion": Counter(),
-        "dominio": Counter(),
-    }
-    for r in rows:
-        for k in out:
-            out[k][str(r.get(k, ""))] += 1
-    return {k: dict(v) for k, v in out.items()}
+def supervised_counts(rows: Sequence[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
+    out: Dict[str, Counter[str]] = {h: Counter() for h in HEAD_KEYS}
+    for row in rows:
+        for head in HEAD_KEYS:
+            if not is_supervised(row, head):
+                continue
+            label = label_or_none(row, head)
+            if head == "dominio" and label is not None:
+                label = normalize_domain_final(label)
+            if label is not None:
+                out[head][label] += 1
+    return {h: dict(c) for h, c in out.items()}
 
 
-def count_goe_infer_nivel(goe_rows: List[Dict[str, Any]]) -> Dict[str, int]:
-    """Conteos de infer_nivel_goe sobre todo GoE (texto >= 15), para techo de `avanzado` sin LLM."""
-    c: Counter = Counter()
-    for x in goe_rows:
-        t = (x.get("text") or "").strip()
-        if len(t) < 15:
-            continue
-        c[infer_nivel_goe(t)] += 1
-    return dict(c)
+def source_counts(rows: Sequence[Dict[str, Any]]) -> Dict[str, int]:
+    return dict(Counter(str(r.get("fuente") or "unknown") for r in rows))
 
 
-def compute_balance_mvp(
-    n: int,
-    counts: Dict[str, Dict[str, int]],
-    goe_infer_nivel: Dict[str, int],
-) -> Dict[str, Any]:
-    """Comprueba fracciones mínimas para cerrar Fase 4 (MVP).
+def duplicate_report(rows: Sequence[Dict[str, Any]]) -> Dict[str, int]:
+    keys = [normalize_text(str(r.get("texto") or "")) for r in rows]
+    return {"total": len(keys), "unique": len(set(keys)), "duplicates": len(keys) - len(set(keys))}
 
-    GoEmotions + heurística léxica aportan pocas filas `avanzado` (~100–150 en el corpus
-    típico); un 12 % global requeriría re-etiquetado LLM o más SO avanzado. Aquí el MVP
-    exige ~2.2 % + ≥100 filas si N≥4000, y se reporta aparte el ideal 12 %.
-    """
 
-    def fv(dim: str, k: str) -> float:
-        c = counts.get(dim, {})
-        return (c.get(k, 0) / n) if n else 0.0
-
-    av_goe = int(goe_infer_nivel.get("avanzado", 0))
-    av_actual = int(counts.get("nivel_tecnico", {}).get("avanzado", 0))
-    stretch_12 = fv("nivel_tecnico", "avanzado") >= 0.12
-
-    checks = {
-        "nivel_avanzado_mvp_frac_ge_0.022": fv("nivel_tecnico", "avanzado") >= 0.022,
-        "nivel_avanzado_mvp_count_ge_100": av_actual >= 100 if n >= 4000 else av_actual >= 80,
-        "nivel_principiante_ge_0.22": fv("nivel_tecnico", "principiante") >= 0.22,
-        "urgencia_alta_ge_0.14": fv("urgencia", "alta") >= 0.14,
-        "urgencia_baja_ge_0.12": fv("urgencia", "baja") >= 0.12,
-    }
-    fr = {
-        "nivel_tecnico": {k: round(fv("nivel_tecnico", k), 4) for k in NIVEL_TECNICO},
-        "urgencia": {k: round(fv("urgencia", k), 4) for k in URGENCIA},
-    }
+def gate_thresholds(total_rows: int) -> Dict[str, int]:
     return {
-        "passes": all(checks.values()),
-        "checks": checks,
-        "fractions": fr,
-        "stretch_goals": {
-            "nivel_avanzado_frac_ge_0.12": stretch_12,
-            "note": "12 % suele requerir etiquetado LLM de nivel en GoE o más SO avanzado.",
-        },
-        "infer_nivel_capacity_goe": goe_infer_nivel,
-        "targets_reference": {
-            "nivel_tecnico": dict(_NIVEL_TARGET_RATIO),
-            "urgencia": dict(_URG_TARGET_RATIO),
+        "full_min_per_label": min(400, max(1, int(total_rows * 0.05))),
+        "split_min_per_label": min(80, max(1, int(total_rows * 0.0055))),
+    }
+
+
+def labels_for_head(head: str) -> Tuple[str, ...]:
+    if head == "nivel_tecnico":
+        return tuple(NIVEL_TECNICO)
+    if head == "urgencia":
+        return tuple(URGENCIA)
+    if head == "emocion":
+        return tuple(EMOCION)
+    if head == "dominio":
+        return tuple(ACTIVE_DOMAINS_FINAL)
+    raise KeyError(head)
+
+
+def gate_counts(counts: Dict[str, Dict[str, int]], min_per_label: int) -> Dict[str, Any]:
+    detail: Dict[str, Dict[str, Any]] = {}
+    passes = True
+    for head in HEAD_KEYS:
+        detail[head] = {}
+        for label in labels_for_head(head):
+            count = int(counts.get(head, {}).get(label, 0))
+            ok = count >= min_per_label
+            detail[head][label] = {"count": count, "min": min_per_label, "pass": ok}
+            passes = passes and ok
+    return {"passes": passes, "detail": detail}
+
+
+
+def source_mix_gates(source_mix: Dict[str, float]) -> Dict[str, Any]:
+    max_train = float(source_mix.get("max_train_synthetic_fraction", 0.70))
+    max_eval = float(source_mix.get("max_eval_synthetic_fraction", 0.55))
+    checks = {
+        f"train_synthetic_fraction_le_{max_train:.2f}": source_mix.get("train_synthetic_fraction", 0.0) <= max_train,
+        f"val_synthetic_fraction_le_{max_eval:.2f}": source_mix.get("val_synthetic_fraction", 0.0) <= max_eval,
+        f"test_synthetic_fraction_le_{max_eval:.2f}": source_mix.get("test_synthetic_fraction", 0.0) <= max_eval,
+    }
+    return {"passes": all(checks.values()), "checks": checks}
+
+
+def compute_quality_report_final(
+    rows: Sequence[Dict[str, Any]],
+    *,
+    train_rows: Optional[Sequence[Dict[str, Any]]] = None,
+    val_rows: Optional[Sequence[Dict[str, Any]]] = None,
+    test_rows: Optional[Sequence[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    total = len(rows)
+    thresholds = gate_thresholds(total)
+    counts = supervised_counts(rows)
+    source_mix = {
+        "all_synthetic_fraction": round(synthetic_fraction(rows), 6),
+        **({"train_synthetic_fraction": round(synthetic_fraction(train_rows), 6)} if train_rows is not None else {}),
+        **({"val_synthetic_fraction": round(synthetic_fraction(val_rows), 6)} if val_rows is not None else {}),
+        **({"test_synthetic_fraction": round(synthetic_fraction(test_rows), 6)} if test_rows is not None else {}),
+        **({"max_train_synthetic_fraction": 0.70, "max_eval_synthetic_fraction": 0.55} if train_rows is not None else {}),
+    }
+    full_gate = gate_counts(counts, thresholds["full_min_per_label"])
+    source_gate = source_mix_gates(source_mix)
+    split_gate_detail: Dict[str, Any] = {}
+    split_passes = True
+    for name, subset in (("train", train_rows), ("val", val_rows), ("test", test_rows)):
+        if subset is None:
+            continue
+        min_label = thresholds["split_min_per_label"]
+        g = gate_counts(supervised_counts(subset), min_label)
+        split_gate_detail[name] = g
+        split_passes = split_passes and bool(g["passes"])
+    return {
+        "total_rows": total,
+        "sources": source_counts(rows),
+        "counts": counts,
+        "duplicates": duplicate_report(rows),
+        "source_mix": source_mix,
+        "thresholds": thresholds,
+        "gates": {
+            "full": full_gate,
+            "splits": {"passes": split_passes, "detail": split_gate_detail},
+            "source_mix": source_gate,
+            "all_pass": bool(
+                full_gate["passes"]
+                and split_passes
+                and source_gate["passes"]
+                and duplicate_report(rows)["duplicates"] == 0
+            ),
         },
     }
+
+
+
+def _row_has_label(row: Dict[str, Any], head: str, label: str) -> bool:
+    if not is_supervised(row, head):
+        return False
+    value = label_or_none(row, head)
+    if head == "dominio" and value is not None:
+        value = normalize_domain_final(value)
+    return value == label
+
+
+def _can_give_row_without_breaking(
+    row: Dict[str, Any],
+    split_counts: Dict[str, Dict[str, int]],
+    min_per_label: int,
+) -> bool:
+    for head in HEAD_KEYS:
+        if not is_supervised(row, head):
+            continue
+        value = label_or_none(row, head)
+        if value is None:
+            continue
+        if head == "dominio":
+            value = normalize_domain_final(value)
+        if split_counts.get(head, {}).get(value, 0) <= min_per_label:
+            return False
+    return True
+
+
+def _repair_split_support(
+    train: List[Dict[str, Any]],
+    subset: List[Dict[str, Any]],
+    *,
+    min_per_label: int,
+    max_synthetic_fraction: float,
+) -> None:
+    changed = True
+    while changed:
+        changed = False
+        counts = supervised_counts(subset)
+        for head in HEAD_KEYS:
+            for label in labels_for_head(head):
+                if counts.get(head, {}).get(label, 0) >= min_per_label:
+                    continue
+                at_synth_cap = synthetic_fraction(subset) >= max_synthetic_fraction
+                donor_idx = next(
+                    (
+                        i
+                        for i, r in enumerate(train)
+                        if _row_has_label(r, head, label)
+                        and (not at_synth_cap or not is_synthetic_row(r))
+                    ),
+                    None,
+                )
+                if donor_idx is None:
+                    donor_idx = next((i for i, r in enumerate(train) if _row_has_label(r, head, label)), None)
+                if donor_idx is None:
+                    continue
+                donor = train[donor_idx]
+                split_counts = supervised_counts(subset)
+                receiver_candidates = [
+                    i for i, r in enumerate(subset) if _can_give_row_without_breaking(r, split_counts, min_per_label)
+                ]
+                if not receiver_candidates:
+                    continue
+                if not is_synthetic_row(donor):
+                    receiver_idx = next((i for i in receiver_candidates if is_synthetic_row(subset[i])), receiver_candidates[0])
+                else:
+                    receiver_idx = next((i for i in receiver_candidates if not is_synthetic_row(subset[i])), receiver_candidates[0])
+                receiver = subset[receiver_idx]
+                next_synth = sum(1 for r in subset if is_synthetic_row(r)) - int(is_synthetic_row(receiver)) + int(is_synthetic_row(donor))
+                if next_synth / len(subset) > max_synthetic_fraction:
+                    continue
+                train.pop(donor_idx)
+                subset.pop(receiver_idx)
+                train.append(receiver)
+                subset.append(donor)
+                changed = True
+                break
+            if changed:
+                break
+
+
+def is_synthetic_row(row: Dict[str, Any]) -> bool:
+    source = str(row.get("fuente") or "")
+    return source == SYNTHETIC_FUENTE_FINAL or source.startswith("synthetic_")
+
+
+def synthetic_fraction(rows: Sequence[Dict[str, Any]]) -> float:
+    return (sum(1 for r in rows if is_synthetic_row(r)) / len(rows)) if rows else 0.0
+
+
+def _limit_synthetic_fraction(
+    train: List[Dict[str, Any]],
+    subset: List[Dict[str, Any]],
+    *,
+    max_fraction: float,
+) -> None:
+    while subset and synthetic_fraction(subset) > max_fraction:
+        synth_idx = next((i for i, r in enumerate(subset) if is_synthetic_row(r)), None)
+        real_idx = next((i for i, r in enumerate(train) if not is_synthetic_row(r)), None)
+        if synth_idx is None or real_idx is None:
+            break
+        synth = subset.pop(synth_idx)
+        real = train.pop(real_idx)
+        subset.append(real)
+        train.append(synth)
+
+def split_rows_final(
+    rows: Sequence[Dict[str, Any]],
+    *,
+    seed: int = 42,
+    train_ratio: float = 0.70,
+    val_ratio: float = 0.15,
+    max_eval_synthetic_frac: float = 0.35,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
+    if not 0 < train_ratio < 1 or not 0 < val_ratio < 1 or train_ratio + val_ratio >= 1:
+        raise ValueError("Invalid split ratios")
+    rng = random.Random(seed)
+    shuffled = list(rows)
+    rng.shuffle(shuffled)
+    n = len(shuffled)
+    n_train = int(round(n * train_ratio))
+    n_val = int(round(n * val_ratio))
+    train: List[Dict[str, Any]] = []
+    val: List[Dict[str, Any]] = []
+    test: List[Dict[str, Any]] = []
+    val_slots = max(1, int(round(20 * val_ratio)))
+    test_slots = max(1, 20 - int(round(20 * train_ratio)) - val_slots)
+    train_cut = 20 - val_slots - test_slots
+    val_cut = train_cut + val_slots
+    for i, row in enumerate(shuffled):
+        slot = i % 20
+        if slot < train_cut:
+            train.append(row)
+        elif slot < val_cut:
+            val.append(row)
+        else:
+            test.append(row)
+    _limit_synthetic_fraction(train, val, max_fraction=max_eval_synthetic_frac)
+    _limit_synthetic_fraction(train, test, max_fraction=max_eval_synthetic_frac)
+    min_split = gate_thresholds(len(rows))["split_min_per_label"]
+    _repair_split_support(train, val, min_per_label=min_split, max_synthetic_fraction=max_eval_synthetic_frac)
+    _repair_split_support(train, test, min_per_label=min_split, max_synthetic_fraction=max_eval_synthetic_frac)
+    return train, val, test
+
+
+def load_json_array(path: Path) -> List[Dict[str, Any]]:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, list):
+        raise ValueError(f"{path} must contain a JSON array")
+    return [r for r in data if isinstance(r, dict)]
+
+
+def load_real_rows_final(
+    *,
+    labeled_path: Path,
+    goemotions_path: Path,
+    seed: int,
+    max_goemotions: int,
+) -> List[Dict[str, Any]]:
+    rng = random.Random(seed)
+    rows: List[Dict[str, Any]] = []
+
+    if labeled_path.exists():
+        for raw in load_json_array(labeled_path):
+            ex = so_to_final_example(raw)
+            if ex is not None:
+                rows.append(ex)
+
+    if goemotions_path.exists() and max_goemotions > 0:
+        goe = load_json_array(goemotions_path)
+        rng.shuffle(goe)
+        picked = 0
+        for raw in goe:
+            if picked >= max_goemotions:
+                break
+            ex = goe_to_final_example(raw)
+            if ex is not None:
+                rows.append(ex)
+                picked += 1
+
+    return dedupe_rows(rows)
+
+
+def extra_synthetic_to_final_example(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    text = strip_leaked_label_footer(str(row.get("texto") or row.get("text") or "").strip())
+    if len(text) < 20:
+        return None
+    nivel = str(row.get("nivel_tecnico") or "").strip()
+    urgencia = str(row.get("urgencia") or "").strip()
+    emocion = str(row.get("emocion") or "").strip()
+    dominio = normalize_domain_final(row.get("dominio") or row.get("domain_synapse"))
+    if nivel not in NIVEL_TECNICO or urgencia not in URGENCIA or emocion not in EMOCION:
+        return None
+    return {
+        "texto": text,
+        "nivel_tecnico": nivel,
+        "urgencia": urgencia,
+        "emocion": emocion,
+        "dominio": dominio,
+        "fuente": str(row.get("fuente") or "synthetic_so_like"),
+        "source_id": str(row.get("source_id") or f"extra:{abs(hash(text))}"),
+        "synthetic_provenance": row.get("synthetic_provenance") or {"generator": "external_so_like"},
+        "supervision": supervision_all(),
+    }
+
+
+def load_extra_synthetic_rows(path: Optional[Path]) -> List[Dict[str, Any]]:
+    if path is None or not path.exists():
+        return []
+    rows = []
+    for raw in load_json_array(path):
+        ex = extra_synthetic_to_final_example(raw)
+        if ex is not None:
+            rows.append(ex)
+    return dedupe_rows(rows)
+
+
+def auto_target_rows_from_real(
+    real_rows_count: int,
+    *,
+    default_target_rows: int,
+    max_target_rows: int,
+    train_ratio: float,
+    val_ratio: float,
+    max_train_synthetic_frac: float = 0.70,
+    max_eval_synthetic_frac: float = 0.55,
+) -> int:
+    """Largest safe dataset size for the current real/synthetic split gates.
+
+    With a 70/15/15 split, synthetic capacity is the weighted sum of the train
+    cap and eval caps. The small epsilon avoids choosing a target that only
+    passes due to rounding.
+    """
+    if real_rows_count <= 0:
+        return default_target_rows
+    test_ratio = 1.0 - train_ratio - val_ratio
+    if train_ratio <= 0 or val_ratio <= 0 or test_ratio <= 0:
+        return default_target_rows
+    synthetic_capacity = (
+        train_ratio * max_train_synthetic_frac
+        + (val_ratio + test_ratio) * max_eval_synthetic_frac
+    )
+    required_real_fraction = max(0.01, 1.0 - synthetic_capacity + 0.005)
+    safe_target = int(real_rows_count / required_real_fraction)
+    return max(default_target_rows, min(max_target_rows, safe_target))
+
+
+def build_final_dataset(
+    *,
+    labeled_path: Path,
+    goemotions_path: Path,
+    target_rows: int,
+    seed: int,
+    max_goemotions: int,
+    synthetic_rows: Optional[int],
+    extra_synthetic_path: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
+    rows = load_real_rows_final(
+        labeled_path=labeled_path,
+        goemotions_path=goemotions_path,
+        seed=seed,
+        max_goemotions=max_goemotions,
+    )
+    rows.extend(load_extra_synthetic_rows(extra_synthetic_path))
+    rows = dedupe_rows(rows)
+    n_synth = synthetic_rows if synthetic_rows is not None else max(0, target_rows - len(rows))
+    if n_synth > 0:
+        rows.extend(generate_balanced_synthetic_rows(n_synth, seed=seed))
+    rows = dedupe_rows(rows)
+
+    if len(rows) > target_rows:
+        real = [r for r in rows if not is_synthetic_row(r)]
+        synth = [r for r in rows if is_synthetic_row(r)]
+        keep_real = real[: min(len(real), target_rows)]
+        keep_synth = synth[: max(0, target_rows - len(keep_real))]
+        rows = keep_real + keep_synth
+    elif len(rows) < target_rows:
+        rows.extend(generate_balanced_synthetic_rows(target_rows - len(rows), seed=seed + 1_000_003))
+        rows = dedupe_rows(rows)
+    return rows
+
+
+def write_json(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Build Synapse final dataset (4k–6k target).")
-    ap.add_argument("--labeled", type=Path, default=PROCESSED_DIR / "labeled.json")
-    ap.add_argument("--goemotions", type=Path, default=PROCESSED_DIR / "goemotions_mapped.json")
-    ap.add_argument("--out-dir", type=Path, default=FINAL_DIR)
-    ap.add_argument("--target-rows", type=int, default=5000, help="Meta total (recomendado 4000–6000)")
-    ap.add_argument("--min-per-emotion", type=int, default=200, help="Mínimo por emoción al muestrear GoE")
-    ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--no-split", action="store_true", help="No generar train/val/test")
-    ap.add_argument("--train", type=float, default=0.70)
-    ap.add_argument("--val", type=float, default=0.15)
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description="Build Synapse dataset final.")
+    parser.add_argument("--labeled", type=Path, default=PROCESSED_DIR / "labeled.json")
+    parser.add_argument("--goemotions", type=Path, default=PROCESSED_DIR / "goemotions_mapped.json")
+    parser.add_argument("--out-dir", type=Path, default=FINAL_DIR)
+    parser.add_argument("--target-rows", type=int, default=10000)
+    parser.add_argument("--auto-target-rows", action="store_true")
+    parser.add_argument("--max-target-rows", type=int, default=12000)
+    parser.add_argument("--max-goemotions", type=int, default=1800)
+    parser.add_argument("--extra-synthetic", type=Path, default=DEFAULT_EXTRA_SYNTHETIC)
+    parser.add_argument("--synthetic-rows", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--train", type=float, default=0.70)
+    parser.add_argument("--val", type=float, default=0.15)
+    parser.add_argument("--max-eval-synthetic-frac", type=float, default=0.55)
+    parser.add_argument("--strict-gates", action="store_true")
+    args = parser.parse_args()
 
-    if args.target_rows < 4000 or args.target_rows > 8000:
-        print(
-            "Advertencia: --target-rows fuera del rango típico 4000–6000; se continúa.",
-            file=sys.stderr,
+    target_rows = args.target_rows
+    if args.auto_target_rows:
+        real_rows = load_real_rows_final(
+            labeled_path=args.labeled,
+            goemotions_path=args.goemotions,
+            seed=args.seed,
+            max_goemotions=args.max_goemotions,
         )
+        target_rows = auto_target_rows_from_real(
+            len(real_rows),
+            default_target_rows=args.target_rows,
+            max_target_rows=args.max_target_rows,
+            train_ratio=args.train,
+            val_ratio=args.val,
+            max_eval_synthetic_frac=args.max_eval_synthetic_frac,
+        )
+        print(f"Auto target rows: real={len(real_rows)} target={target_rows}")
 
-    if not args.labeled.exists():
-        print(f"Error: no existe {args.labeled}", file=sys.stderr)
-        return 1
-    if not args.goemotions.exists():
-        print(f"Error: no existe {args.goemotions}", file=sys.stderr)
-        return 1
-
-    rng = __import__("random").Random(args.seed)
-
-    with open(args.labeled, encoding="utf-8") as f:
-        labeled = json.load(f)
-    with open(args.goemotions, encoding="utf-8") as f:
-        goe = json.load(f)
-
-    go_infer_nivel = count_goe_infer_nivel(goe)
-
-    used_keys: Set[str] = set()
-    so_examples: List[Dict[str, Any]] = []
-    for row in labeled:
-        ex = so_row_to_example(row)
-        if not ex["texto"].strip():
-            continue
-        k = normalize_text(ex["texto"])
-        if k in used_keys:
-            continue
-        used_keys.add(k)
-        so_examples.append(ex)
-
-    budget_goe = max(0, args.target_rows - len(so_examples))
-    goe_picked = select_goemotions_balanced(
-        goe, used_keys, budget_goe, rng, args.min_per_emotion, so_examples, args.target_rows
+    rows = build_final_dataset(
+        labeled_path=args.labeled,
+        goemotions_path=args.goemotions,
+        target_rows=target_rows,
+        seed=args.seed,
+        max_goemotions=args.max_goemotions,
+        synthetic_rows=args.synthetic_rows,
+        extra_synthetic_path=args.extra_synthetic,
     )
-
-    combined = so_examples + goe_picked
-
-    if len(combined) < args.target_rows:
-        need = args.target_rows - len(combined)
-        aug = augment_so_examples(so_examples, used_keys, need, rng)
-        combined.extend(aug)
-
-    if len(combined) < args.target_rows:
-        print(
-            f"Advertencia: solo se alcanzaron {len(combined)} filas (< {args.target_rows}). "
-            "Aumenta goemotions_mapped o reduce --target-rows.",
-            file=sys.stderr,
-        )
+    train, val, test = split_rows_final(
+        rows,
+        seed=args.seed,
+        train_ratio=args.train,
+        val_ratio=args.val,
+        max_eval_synthetic_frac=args.max_eval_synthetic_frac,
+    )
+    report = compute_quality_report_final(rows, train_rows=train, val_rows=val, test_rows=test)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    dataset_path = args.out_dir / "dataset.json"
-    with open(dataset_path, "w", encoding="utf-8") as f:
-        json.dump(combined, f, ensure_ascii=False, indent=2)
-
-    counts = dim_counts(combined)
-    report = {
-        "total_rows": len(combined),
-        "target_rows": args.target_rows,
-        "seed": args.seed,
-        "sources": dict(Counter(r.get("fuente", "?") for r in combined)),
-        "counts": counts,
-        "balance_mvp": compute_balance_mvp(len(combined), counts, go_infer_nivel),
-        "sampling": {
-            "goemotions": "balanced_buckets_emocion_nivel_urgencia",
-            "targets_integer": {
-                "nivel_tecnico": integer_targets(
-                    args.target_rows, NIVEL_TECNICO, _NIVEL_TARGET_RATIO
-                ),
-                "urgencia": integer_targets(args.target_rows, URGENCIA, _URG_TARGET_RATIO),
-                "emocion": emotion_target_counts(args.target_rows),
-            },
+    write_json(args.out_dir / "dataset.json", rows)
+    write_json(args.out_dir / "train.json", train)
+    write_json(args.out_dir / "val.json", val)
+    write_json(args.out_dir / "test.json", test)
+    write_json(args.out_dir / "quality_report.json", report)
+    write_json(
+        args.out_dir / "split_meta.json",
+        {
+            "source": str(args.out_dir / "dataset.json"),
+            "seed": args.seed,
+            "target_rows": target_rows,
+            "auto_target_rows": bool(args.auto_target_rows),
+            "train": len(train),
+            "val": len(val),
+            "test": len(test),
+            "max_eval_synthetic_frac": args.max_eval_synthetic_frac,
+            "stratify_note": "source-aware deterministic split; gates verify per-head support",
         },
-        "inputs": {"labeled": str(args.labeled), "goemotions": str(args.goemotions)},
-    }
-    with open(args.out_dir / "quality_report.json", "w", encoding="utf-8") as f:
-        json.dump(report, f, ensure_ascii=False, indent=2)
+    )
 
-    if not report["balance_mvp"]["passes"]:
-        print(
-            "Advertencia: balance_mvp no cumple umbrales (ver quality_report.json).",
-            file=sys.stderr,
-        )
-
-    print(f"Escrito {dataset_path} ({len(combined)} ejemplos)")
+    print(f"Escrito {args.out_dir / 'dataset.json'} ({len(rows)} ejemplos)")
     print(f"Fuentes: {report['sources']}")
-
-    if not args.no_split:
-        from split_dataset import _validate_row, split_data
-
-        for i, row in enumerate(combined):
-            _validate_row(row, i)
-        train_r, val_r, test_r = split_data(combined, args.seed, args.train, args.val)
-        for name, subset in (
-            ("train.json", train_r),
-            ("val.json", val_r),
-            ("test.json", test_r),
-        ):
-            out = args.out_dir / name
-            with open(out, "w", encoding="utf-8") as f:
-                json.dump(subset, f, ensure_ascii=False, indent=2)
-            print(f"Escrito {out} ({len(subset)} ejemplos)")
-        with open(args.out_dir / "split_meta.json", "w", encoding="utf-8") as f:
-            json.dump(
-                {
-                    "source": str(dataset_path),
-                    "seed": args.seed,
-                    "train": len(train_r),
-                    "val": len(val_r),
-                    "test": len(test_r),
-                    "stratify_note": "split_dataset.split_data",
-                },
-                f,
-                indent=2,
-            )
-
+    print(f"Gates all_pass={report['gates']['all_pass']}")
+    if args.strict_gates and not report["gates"]["all_pass"]:
+        return 1
     return 0
 
 
