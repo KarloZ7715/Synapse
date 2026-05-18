@@ -41,11 +41,13 @@ Configuracion recomendada:
 - Build command: `pnpm install --frozen-lockfile && pnpm sync:model && pnpm build`
 - Build output directory: `dist`
 - Variable de entorno: `VITE_API_BASE_URL=https://<tu-servicio-render>.onrender.com`
+- Variable opcional: `VITE_ONNX_MODEL_URL=https://<tu-servicio-render>.onrender.com/assets/models/synapse_textcnn.onnx`
 
 Notas:
 
 - El repo ya incluye `frontend/.node-version` con Node 22.
 - `pnpm sync:model` es obligatorio en el build porque copia el ONNX y el vocabulario desde `neural_network/notebook/data/` a `public/models/`.
+- Si despliegas por subida directa a Pages y el `.onnx` supera el límite por archivo, define `VITE_ONNX_MODEL_URL`; el postbuild eliminará `dist/models/synapse_textcnn.onnx` y la app cargará el modelo desde esa URL externa.
 - Los headers de seguridad para Pages viven en `frontend/public/_headers`.
 
 

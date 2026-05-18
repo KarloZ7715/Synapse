@@ -11,6 +11,11 @@ function modelsBaseUrl(): string {
   return new URL(MODEL_ASSETS_SUBPATH, `${window.location.origin}${import.meta.env.BASE_URL}`).href;
 }
 
+function onnxModelUrl(): string | undefined {
+  const configured = import.meta.env.VITE_ONNX_MODEL_URL?.trim();
+  return configured ? configured : undefined;
+}
+
 export function useClassifier() {
   const [status, setStatus] = createSignal<ClassifierStatus>("idle");
   const [result, setResult] = createSignal<ClassificationResult | null>(null);
@@ -61,7 +66,11 @@ export function useClassifier() {
     };
 
     setStatus("loading_model");
-    worker.postMessage({ type: "init", assetsBase: modelsBaseUrl() } satisfies MainToWorker);
+    worker.postMessage({
+      type: "init",
+      assetsBase: modelsBaseUrl(),
+      onnxUrl: onnxModelUrl(),
+    } satisfies MainToWorker);
   });
 
   onCleanup(() => {

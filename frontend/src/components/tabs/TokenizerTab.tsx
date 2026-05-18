@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createResource } from "solid-js";
-import { MODEL_ASSETS_SUBPATH, MODEL_MAX_LEN } from "~/config/model";
+import { MODEL_ASSETS_SUBPATH, MODEL_MAX_LEN, MODEL_VOCAB_FILENAME } from "~/config/model";
 import type { ConversationStore } from "~/store/conversation";
 import { tokenize, type Word2Idx } from "~/utils/tokenizer";
 
@@ -7,7 +7,7 @@ type VocabFile = { word2idx: Record<string, number> };
 
 async function fetchVocab(): Promise<Word2Idx> {
   const base = `${window.location.origin}${import.meta.env.BASE_URL}${MODEL_ASSETS_SUBPATH}`;
-  const res = await fetch(`${base}vocab.json`);
+  const res = await fetch(`${base}${MODEL_VOCAB_FILENAME}`);
   if (!res.ok) throw new Error(`vocab.json: ${res.status}`);
   const data = (await res.json()) as VocabFile;
   return data.word2idx;

@@ -131,12 +131,14 @@ Pasos minimos:
 3. Si quieres que tambien funcionen previews de Pages, deja `ALLOWED_ORIGIN_REGEX=https://.*\\.pages\\.dev`.
 4. En Cloudflare Pages configura el proyecto con root `frontend`, build command `pnpm install --frozen-lockfile && pnpm sync:model && pnpm build` y output `dist`.
 5. En Cloudflare Pages define `VITE_API_BASE_URL=https://<tu-servicio-render>.onrender.com`.
+6. Si Pages rechaza `synapse_textcnn.onnx` por tamaño, define también `VITE_ONNX_MODEL_URL=https://<tu-servicio-render>.onrender.com/assets/models/synapse_textcnn.onnx` para que el frontend cargue el modelo desde el backend y el build omita ese archivo del `dist`.
 
 Notas operativas:
 
 - El frontend necesita ejecutar `pnpm sync:model` durante build para copiar `synapse_textcnn.onnx` y `vocab.json` al directorio publico.
 - `ALLOWED_ORIGINS` debe contener tu dominio estable de produccion, por ejemplo `https://synapse.pages.dev` o tu dominio custom.
 - `ALLOWED_ORIGIN_REGEX` permite previews de Cloudflare Pages sin tener que ir agregando cada subdominio a mano.
+- Con `VITE_ONNX_MODEL_URL`, Pages puede alojar la SPA sin cargar el `.onnx` grande en la subida directa.
 
 ## Seguridad y privacidad
 

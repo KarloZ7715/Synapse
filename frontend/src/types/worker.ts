@@ -6,5 +6,5 @@ export type WorkerToMain =
   | { type: "error"; requestId?: string; message: string };
 
 export type MainToWorker =
-  | { type: "init"; assetsBase: string }
+  | { type: "init"; assetsBase: string; onnxUrl?: string }
   | { type: "classify"; requestId: string; text: string };

@@ -2,16 +2,20 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.models import ChatRequest
 from app.services.groq_stream import stream_chat_completion
 
 settings = get_settings()
+BACKEND_ROOT = Path(__file__).resolve().parent
+STATIC_ROOT = BACKEND_ROOT / "static"
 
 app = FastAPI(title="Synapse Backend", version="0.1.0")
 app.add_middleware(
@@ -22,6 +26,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+app.mount("/assets", StaticFiles(directory=STATIC_ROOT), name="assets")
 
 
 @app.get("/health")

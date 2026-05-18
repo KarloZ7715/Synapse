@@ -1,5 +1,11 @@
 import * as ort from "onnxruntime-web";
-import { MODEL_MAX_LEN, ONNX_INPUT_NAME, ONNX_OUTPUT_NAMES } from "~/config/model";
+import {
+  MODEL_MAX_LEN,
+  MODEL_ONNX_FILENAME,
+  MODEL_VOCAB_FILENAME,
+  ONNX_INPUT_NAME,
+  ONNX_OUTPUT_NAMES,
+} from "~/config/model";
 import type { ClassificationResult } from "~/types/classifier";
 import type { MainToWorker, WorkerToMain } from "~/types/worker";
 import { postprocessOrtOutputs } from "~/utils/postprocess";
@@ -30,7 +36,7 @@ function resolveUrl(rel: string): string {
 }
 
 async function loadVocab(): Promise<void> {
-  const url = resolveUrl("vocab.json");
+  const url = resolveUrl(MODEL_VOCAB_FILENAME);
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`No se pudo cargar vocab.json (${res.status}) desde ${url}`);
@@ -66,7 +72,7 @@ async function handleInit(msg: Extract<MainToWorker, { type: "init" }>): Promise
   if (!word2idx) {
     throw new Error("word2idx no cargado");
   }
-  const onnxUrl = resolveUrl("synapse_textcnn.onnx");
+  const onnxUrl = msg.onnxUrl ?? resolveUrl(MODEL_ONNX_FILENAME);
   session = await createSessionWithFallback(onnxUrl);
   const loadMs = performance.now() - t0;
   post({ type: "ready", ortBackend: activeOrtBackend, loadMs });
