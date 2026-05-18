@@ -33,4 +33,19 @@ Esto copia `synapse_textcnn.onnx` y `vocab.json` desde `neural_network/notebook/
 | `pnpm lint`      | Biome                                                   |
 | `pnpm typecheck` | `tsc --noEmit`                                          |
 
+## Deploy en Cloudflare Pages
+
+Configuracion recomendada:
+
+- Root directory: `frontend`
+- Build command: `pnpm install --frozen-lockfile && pnpm sync:model && pnpm build`
+- Build output directory: `dist`
+- Variable de entorno: `VITE_API_BASE_URL=https://<tu-servicio-render>.onrender.com`
+
+Notas:
+
+- El repo ya incluye `frontend/.node-version` con Node 22.
+- `pnpm sync:model` es obligatorio en el build porque copia el ONNX y el vocabulario desde `neural_network/notebook/data/` a `public/models/`.
+- Los headers de seguridad para Pages viven en `frontend/public/_headers`.
+
 

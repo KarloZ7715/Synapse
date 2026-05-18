@@ -1,47 +1,94 @@
-import { Moon, Sun, Terminal, Zap } from "~/components/icons";
+import { Show } from "solid-js";
 import { useTheme } from "~/hooks/useTheme";
+import type { ClassifierStatus } from "~/types/classifier";
 
-export function AppHeader() {
+function healthLabel(status: ClassifierStatus): string {
+  switch (status) {
+    case "ready":
+      return "STABLE";
+    case "classifying":
+      return "PROCESSING";
+    case "loading_model":
+      return "LOADING";
+    case "error":
+      return "ERROR";
+    default:
+      return "IDLE";
+  }
+}
+
+function healthDotClass(status: ClassifierStatus): string {
+  if (status === "error") return "bg-error";
+  if (status === "ready" || status === "classifying") return "bg-primary-fixed";
+  return "bg-on-surface-variant";
+}
+
+export function AppHeader(props: {
+  status: ClassifierStatus;
+  loadMs: number | null;
+  inferenceMs: number | null;
+  backend: "webgpu" | "wasm" | null;
+  onToggleTerminal: () => void;
+}) {
   const { theme, toggle } = useTheme();
 
   return (
-    <header class="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-base)]/80 px-4 backdrop-blur-md">
-      <div class="flex items-center gap-3">
-        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#22d3ee]/30 to-[#22d3ee]/10 ring-1 ring-[#22d3ee]/20">
-          <Zap color="#22d3ee" size={16} />
-        </div>
-        <span class="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
-          Synapse
-        </span>
-        <span class="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-tertiary)]">
-          v0.1
-        </span>
+    <header class="z-50 flex h-16 w-full shrink-0 items-center justify-between border-b border-primary-fixed/20 bg-surface-container-lowest/80 px-gutter text-primary-fixed backdrop-blur-md">
+      <div class="flex items-center gap-4">
+        <span class="material-symbols-outlined text-3xl text-primary-fixed">psychology</span>
+        <h1
+          class="glitch-text font-display text-[20px] font-bold tracking-tighter text-primary-fixed drop-shadow-[0_0_8px_rgba(121,255,91,0.4)] md:text-[24px]"
+          data-text="SYNAPSE AI v1.0.4"
+        >
+          SYNAPSE AI v1.0.4
+        </h1>
       </div>
 
-      <div class="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
-        <span class="flex items-center gap-1.5 font-mono">
-          <span class="h-1.5 w-1.5 rounded-full bg-[#22d3ee] shadow-[0_0_6px_#22d3ee]" />
-          WebGPU
-        </span>
-        <span class="font-mono text-[var(--text-tertiary)]">12ms</span>
+      <div class="hidden items-center gap-6 font-mono text-[12px] uppercase tracking-wider md:flex">
+        <div class="flex items-center gap-2">
+          <span
+            class={`h-2 w-2 animate-pulse rounded-full shadow-[0_0_8px_currentColor] ${healthDotClass(props.status)}`}
+          />
+          <span class="text-on-surface-variant">
+            SYSTEM_HEALTH: <span class="text-on-surface">{healthLabel(props.status)}</span>
+          </span>
+        </div>
+        <Show when={props.inferenceMs !== null}>
+          <div class="text-on-surface-variant">
+            LATENCY:{" "}
+            <span class="text-on-surface">{Math.round(props.inferenceMs ?? 0)}ms</span>
+          </div>
+        </Show>
+        <Show when={props.inferenceMs === null && props.loadMs !== null}>
+          <div class="text-on-surface-variant">
+            LOAD: <span class="text-on-surface">{Math.round(props.loadMs ?? 0)}ms</span>
+          </div>
+        </Show>
+        <Show when={props.backend !== null}>
+          <div class="text-on-surface-variant">
+            BACKEND: <span class="text-on-surface">{(props.backend ?? "").toUpperCase()}</span>
+          </div>
+        </Show>
+      </div>
+
+      <div class="flex items-center gap-1">
         <button
           type="button"
-          onClick={toggle}
-          class="rounded-lg p-1.5 transition-all hover:bg-[var(--bg-surface)] hover:shadow-[var(--shadow-panel)]"
-          aria-label={theme() === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          class="p-2 text-on-surface-variant transition-all hover:bg-surface-variant hover:text-primary-fixed"
+          onClick={props.onToggleTerminal}
+          aria-label="Abrir terminal"
         >
-          {theme() === "dark" ? (
-            <Sun color="var(--text-secondary)" size={16} />
-          ) : (
-            <Moon color="var(--text-secondary)" size={16} />
-          )}
+          <span class="material-symbols-outlined">terminal</span>
         </button>
         <button
           type="button"
-          class="rounded-lg p-1.5 transition-all hover:bg-[var(--bg-surface)] hover:shadow-[var(--shadow-panel)]"
-          aria-label="Consola"
+          class="p-2 text-on-surface-variant transition-all hover:bg-surface-variant hover:text-primary-fixed"
+          onClick={toggle}
+          aria-label={theme() === "dark" ? "Modo claro" : "Modo oscuro"}
         >
-          <Terminal color="var(--text-secondary)" size={16} />
+          <span class="material-symbols-outlined">
+            {theme() === "dark" ? "light_mode" : "dark_mode"}
+          </span>
         </button>
       </div>
     </header>

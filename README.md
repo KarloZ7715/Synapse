@@ -10,6 +10,7 @@ Synapse es una plataforma de tutoría de programación asistida por IA para cons
 - [Datos y entrenamiento](#datos-y-entrenamiento)
 - [Arquitectura y operación](#arquitectura-y-operación)
 - [API del sistema](#api-del-sistema)
+- [Deploy](#deploy)
 - [Seguridad y privacidad](#seguridad-y-privacidad)
 - [Objetivos no funcionales](#objetivos-no-funcionales)
 - [Estructura del repositorio](#estructura-del-repositorio)
@@ -109,6 +110,33 @@ El contrato de `POST /api/chat` contempla:
 - tokens SSE para render incremental,
 - evento final de uso (proveedor, latencia, tokens),
 - errores estandarizados (`400`, `429`, `500`).
+
+## Deploy
+
+Stack recomendado para este repo:
+
+- Frontend estatico en Cloudflare Pages.
+- Backend FastAPI en Render.
+
+Configuracion lista en repo:
+
+- `render.yaml` en la raiz para levantar el backend como Web Service.
+- `frontend/.node-version` para fijar Node 22 en el build del frontend.
+- `frontend/public/_headers` con CSP compatible con subdominios de Render.
+
+Pasos minimos:
+
+1. Crea el backend en Render usando el blueprint de `render.yaml` o copiando su configuracion manualmente.
+2. En Render define `GROQ_API_KEY` y `ALLOWED_ORIGINS` con tu dominio final de Cloudflare Pages.
+3. Si quieres que tambien funcionen previews de Pages, deja `ALLOWED_ORIGIN_REGEX=https://.*\\.pages\\.dev`.
+4. En Cloudflare Pages configura el proyecto con root `frontend`, build command `pnpm install --frozen-lockfile && pnpm sync:model && pnpm build` y output `dist`.
+5. En Cloudflare Pages define `VITE_API_BASE_URL=https://<tu-servicio-render>.onrender.com`.
+
+Notas operativas:
+
+- El frontend necesita ejecutar `pnpm sync:model` durante build para copiar `synapse_textcnn.onnx` y `vocab.json` al directorio publico.
+- `ALLOWED_ORIGINS` debe contener tu dominio estable de produccion, por ejemplo `https://synapse.pages.dev` o tu dominio custom.
+- `ALLOWED_ORIGIN_REGEX` permite previews de Cloudflare Pages sin tener que ir agregando cada subdominio a mano.
 
 ## Seguridad y privacidad
 

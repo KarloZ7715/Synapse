@@ -85,6 +85,8 @@ export function useClassifier() {
       throw new Error(error() ?? "Clasificador no disponible");
     }
     const id = makeRequestId();
+    setResult(null);
+    setError(null);
     setStatus("classifying");
     return new Promise<ClassificationResult>((resolve, reject) => {
       pending.set(id, { resolve, reject });
