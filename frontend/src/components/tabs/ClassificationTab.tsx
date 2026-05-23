@@ -1,10 +1,10 @@
 import { Show } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
+import type { ConversationStore } from "~/store/conversation";
+import type { ClassificationResult, ClassifierStatus } from "~/types/classifier";
 import { CommandInput } from "./classification/CommandInput";
 import { DiagnosticsHUD } from "./classification/DiagnosticsHUD";
 import { Transcript } from "./classification/Transcript";
-import type { ConversationStore } from "~/store/conversation";
-import type { ClassificationResult, ClassifierStatus } from "~/types/classifier";
 
 type Classifier = {
   status: () => ClassifierStatus;
@@ -25,10 +25,7 @@ export function ClassificationTab(props: {
   return (
     <div class="flex min-h-0 min-w-0 flex-1 overflow-hidden">
       <section class="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface/90">
-        <Transcript
-          status={props.classifier.status()}
-          turns={props.convo.turns}
-        />
+        <Transcript status={props.classifier.status()} convo={props.convo} />
         <CommandInput
           value={props.convo.draftQuestion}
           onChange={(v) => props.setConvo("draftQuestion", v)}

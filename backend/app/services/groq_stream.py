@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from collections.abc import AsyncIterator
@@ -128,6 +129,7 @@ async def stream_chat_completion(
                             "latency_ms": round((time.perf_counter() - started_at) * 1000),
                         }
                     )
+                    await asyncio.sleep(0)
 
                 choices = chunk.get("choices") or []
                 if not choices:
@@ -137,6 +139,7 @@ async def stream_chat_completion(
                 token = delta.get("content")
                 if token:
                     yield sse_event({"token": token})
+                    await asyncio.sleep(0)
 
     if not usage_emitted:
         yield sse_event(

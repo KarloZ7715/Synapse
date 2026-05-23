@@ -21,6 +21,7 @@ export function useClassifier() {
   const [result, setResult] = createSignal<ClassificationResult | null>(null);
   const [error, setError] = createSignal<string | null>(null);
   const [loadMs, setLoadMs] = createSignal<number | null>(null);
+  const [ortBackend, setOrtBackend] = createSignal<"webgpu" | "wasm" | null>(null);
 
   let worker: Worker | undefined;
   const pending = new Map<
@@ -38,6 +39,7 @@ export function useClassifier() {
       if (msg.type === "ready") {
         setStatus("ready");
         setLoadMs(msg.loadMs);
+        setOrtBackend(msg.ortBackend);
         setError(null);
         return;
       }
@@ -66,11 +68,11 @@ export function useClassifier() {
     };
 
     setStatus("loading_model");
-    worker.postMessage({
-      type: "init",
-      assetsBase: modelsBaseUrl(),
-      onnxUrl: onnxModelUrl(),
-    } satisfies MainToWorker);
+    const onnxUrl = onnxModelUrl();
+    const initMessage: MainToWorker = onnxUrl
+      ? { type: "init", assetsBase: modelsBaseUrl(), onnxUrl }
+      : { type: "init", assetsBase: modelsBaseUrl() };
+    worker.postMessage(initMessage);
   });
 
   onCleanup(() => {
@@ -108,6 +110,7 @@ export function useClassifier() {
     error,
     result,
     loadMs,
+    ortBackend,
     classify,
   } as const;
 }

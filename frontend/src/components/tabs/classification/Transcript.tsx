@@ -1,16 +1,13 @@
 import { For, Show } from "solid-js";
 import { MarkdownContent } from "~/components/markdown/MarkdownContent";
-import type { ConversationTurn, LlmState } from "~/store/conversation";
+import type { ConversationStore, LlmState } from "~/store/conversation";
 import type { ClassificationResult, ClassifierStatus } from "~/types/classifier";
 
-export function Transcript(props: {
-  status: ClassifierStatus;
-  turns: ConversationTurn[];
-}) {
+export function Transcript(props: { status: ClassifierStatus; convo: ConversationStore }) {
   return (
     <div class="relative z-10 flex flex-1 flex-col gap-6 overflow-y-auto p-8">
-      <Show when={props.turns.length > 0} fallback={<EmptyState status={props.status} />}>
-        <For each={props.turns}>
+      <Show when={props.convo.turns.length > 0} fallback={<EmptyState status={props.status} />}>
+        <For each={props.convo.turns}>
           {(turn) => (
             <>
               <UserBubble text={turn.submittedText} />
@@ -23,8 +20,17 @@ export function Transcript(props: {
               <Show when={turn.classification.status === "error" && turn.classification.error}>
                 {(error) => <ClassifierErrorBubble error={error()} />}
               </Show>
-              <Show when={turn.llm.status !== "idle" || turn.llm.response || turn.llm.error}>
-                <LlmBubble llm={turn.llm} />
+              <Show
+                when={() =>
+                  turn.llm.status !== "idle" || turn.llm.response.length > 0 || turn.llm.error
+                }
+              >
+                <LlmBubble
+                  status={() => turn.llm.status}
+                  response={() => turn.llm.response}
+                  usage={() => turn.llm.usage}
+                  error={() => turn.llm.error}
+                />
               </Show>
             </>
           )}
@@ -151,11 +157,16 @@ function ClassifierErrorBubble(props: { error: string }) {
   );
 }
 
-function LlmBubble(props: { llm: LlmState }) {
+function LlmBubble(props: {
+  status: () => LlmState["status"];
+  response: () => string;
+  usage: () => LlmState["usage"];
+  error: () => LlmState["error"];
+}) {
   const statusLabel = () => {
-    if (props.llm.status === "streaming") return "STREAMING";
-    if (props.llm.status === "done") return "DONE";
-    if (props.llm.status === "error") return "ERROR";
+    if (props.status() === "streaming") return "STREAMING";
+    if (props.status() === "done") return "DONE";
+    if (props.status() === "error") return "ERROR";
     return "IDLE";
   };
 
@@ -172,45 +183,41 @@ function LlmBubble(props: { llm: LlmState }) {
           <p class="text-on-surface-variant">
             Respuesta generada por el LLM a partir de los metadatos inferidos por la red neuronal.
           </p>
-          <Show when={props.llm.error}>
-            {(error) => (
-              <div class="border border-error/40 bg-error/10 p-3 text-error">{error()}</div>
-            )}
+          <Show when={() => props.error()}>
+            <div class="border border-error/40 bg-error/10 p-3 text-error">{props.error()}</div>
           </Show>
           <div class="border border-outline-variant bg-surface-container-lowest p-3">
             <Show
-              when={props.llm.response}
+              when={() => props.response().length > 0}
               fallback={
                 <span class="text-on-surface-variant">Esperando tokens del backend...</span>
               }
             >
               <MarkdownContent
-                source={props.llm.response}
-                streaming={props.llm.status === "streaming"}
+                source={props.response()}
+                streaming={props.status() === "streaming"}
               />
             </Show>
           </div>
-          <Show when={props.llm.usage}>
-            {(usage) => (
-              <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-outline-variant pt-2 text-[11px] md:grid-cols-4">
-                <div>
-                  <div class="text-on-surface-variant">PROVEEDOR</div>
-                  <div class="uppercase text-secondary-fixed">{usage().provider}</div>
-                </div>
-                <div>
-                  <div class="text-on-surface-variant">TOKENS IN</div>
-                  <div class="text-secondary-fixed">{usage().tokens_input}</div>
-                </div>
-                <div>
-                  <div class="text-on-surface-variant">TOKENS OUT</div>
-                  <div class="text-secondary-fixed">{usage().tokens_output}</div>
-                </div>
-                <div>
-                  <div class="text-on-surface-variant">LATENCIA</div>
-                  <div class="text-secondary-fixed">{usage().latency_ms}ms</div>
-                </div>
+          <Show when={() => props.usage()}>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-outline-variant pt-2 text-[11px] md:grid-cols-4">
+              <div>
+                <div class="text-on-surface-variant">PROVEEDOR</div>
+                <div class="uppercase text-secondary-fixed">{props.usage()?.provider}</div>
               </div>
-            )}
+              <div>
+                <div class="text-on-surface-variant">TOKENS IN</div>
+                <div class="text-secondary-fixed">{props.usage()?.tokens_input}</div>
+              </div>
+              <div>
+                <div class="text-on-surface-variant">TOKENS OUT</div>
+                <div class="text-secondary-fixed">{props.usage()?.tokens_output}</div>
+              </div>
+              <div>
+                <div class="text-on-surface-variant">LATENCIA</div>
+                <div class="text-secondary-fixed">{props.usage()?.latency_ms}ms</div>
+              </div>
+            </div>
           </Show>
         </div>
       </div>
