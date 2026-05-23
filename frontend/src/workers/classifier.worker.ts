@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web";
+import * as ort from "onnxruntime-web/webgpu";
 import {
   MODEL_MAX_LEN,
   MODEL_ONNX_FILENAME,
@@ -35,6 +35,10 @@ function resolveUrl(rel: string): string {
   }
 }
 
+function webGpuAvailable(): boolean {
+  return typeof navigator !== "undefined" && "gpu" in navigator;
+}
+
 async function loadVocab(): Promise<void> {
   const url = resolveUrl(MODEL_VOCAB_FILENAME);
   const res = await fetch(url);
@@ -50,19 +54,24 @@ async function loadVocab(): Promise<void> {
 }
 
 async function createSessionWithFallback(onnxUrl: string): Promise<ort.InferenceSession> {
-  try {
-    activeOrtBackend = "webgpu";
-    return await ort.InferenceSession.create(onnxUrl, {
-      executionProviders: ["webgpu"],
-      graphOptimizationLevel: "all",
-    });
-  } catch {
-    activeOrtBackend = "wasm";
-    return await ort.InferenceSession.create(onnxUrl, {
-      executionProviders: ["wasm"],
-      graphOptimizationLevel: "all",
-    });
+  if (webGpuAvailable()) {
+    try {
+      const webgpuSession = await ort.InferenceSession.create(onnxUrl, {
+        executionProviders: ["webgpu", "wasm"],
+        graphOptimizationLevel: "all",
+      });
+      activeOrtBackend = "webgpu";
+      return webgpuSession;
+    } catch (error) {
+      console.warn("[synapse:classifier] WebGPU falló, usando WASM", error);
+    }
   }
+
+  activeOrtBackend = "wasm";
+  return ort.InferenceSession.create(onnxUrl, {
+    executionProviders: ["wasm"],
+    graphOptimizationLevel: "all",
+  });
 }
 
 async function handleInit(msg: Extract<MainToWorker, { type: "init" }>): Promise<void> {

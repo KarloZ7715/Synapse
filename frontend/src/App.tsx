@@ -13,11 +13,12 @@ import { TokenizerTab } from "~/components/tabs/TokenizerTab";
 import { useBreakpoint } from "~/hooks/useBreakpoint";
 import { useClassifier } from "~/hooks/useClassifier";
 import { streamChat } from "~/lib/chatStream";
+import { scheduleStreamingUpdate } from "~/lib/scheduleUpdate";
 import {
-  createConversationStore,
-  createEmptyLlmState,
   type ConversationTurn,
   type LlmState,
+  createConversationStore,
+  createEmptyLlmState,
 } from "~/store/conversation";
 import { createUIStore } from "~/store/ui";
 import type { ChatOptions } from "~/types/chat";
@@ -63,7 +64,10 @@ export default function App() {
     setConvo("turns", turnIndex, "llm", key, value);
   };
 
-  const setTurnClassification = (turnId: string, classification: ConversationTurn["classification"]) => {
+  const setTurnClassification = (
+    turnId: string,
+    classification: ConversationTurn["classification"],
+  ) => {
     const turnIndex = findTurnIndex(turnId);
     if (turnIndex >= 0) {
       setConvo("turns", turnIndex, "classification", classification);
@@ -113,8 +117,10 @@ export default function App() {
         },
         {
           onToken: (token) => {
-            setConvo("llm", "response", (current) => `${current}${token}`);
-            patchTurnLlm(turnId, "response", (current) => `${current}${token}`);
+            scheduleStreamingUpdate(() => {
+              setConvo("llm", "response", (current) => `${current}${token}`);
+              patchTurnLlm(turnId, "response", (current) => `${current}${token}`);
+            });
           },
           onUsage: (usage) => {
             setConvo("llm", "usage", usage);
@@ -172,7 +178,7 @@ export default function App() {
         status: "done",
         result: r,
         error: null,
-    });
+      });
       await runLlm(turnId, text, r.metadata, DEFAULT_LLM_OPTIONS);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
@@ -216,7 +222,7 @@ export default function App() {
           status={classifier.status()}
           loadMs={classifier.loadMs()}
           inferenceMs={convo.lastResult?.inferenceMs ?? null}
-          backend={convo.lastResult?.ortBackend ?? null}
+          backend={convo.lastResult?.ortBackend ?? classifier.ortBackend() ?? null}
           onToggleTerminal={() => ui.setState("terminalOpen", (v) => !v)}
         />
       }
@@ -231,10 +237,7 @@ export default function App() {
       }
     >
       <Show when={isMobile()}>
-        <MobileTabBar
-          active={ui.state.activeTab}
-          onSelect={(t) => ui.setState("activeTab", t)}
-        />
+        <MobileTabBar active={ui.state.activeTab} onSelect={(t) => ui.setState("activeTab", t)} />
       </Show>
       <Show when={ui.state.activeTab === "classification"}>
         <ClassificationTab
