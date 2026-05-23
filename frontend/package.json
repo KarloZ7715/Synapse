@@ -16,7 +16,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
-    "sync:model": "node scripts/sync-model-artifacts.mjs"
+    "sync:model": "node scripts/sync-model-artifacts.mjs",
+    "validate:examples": "python3 scripts/validate-example-prompts.py"
   },
   "dependencies": {
     "@ark-ui/solid": "^5.36.2",
