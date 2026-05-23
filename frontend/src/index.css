@@ -1,5 +1,12 @@
 @import "./styles/tokens.css";
+@import "./styles/theme-light.css";
+@import "./styles/theme-transitions.css";
 @import "./styles/markdown.css";
+@import "./styles/example-carousel.css";
+
+html {
+  color-scheme: dark;
+}
 
 body {
   font-family: var(--font-body);
@@ -10,13 +17,24 @@ body {
     linear-gradient(90deg, var(--color-surface-variant) 1px, transparent 1px);
   background-size: 32px 32px;
   background-position: center top;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
 [data-theme="light"] body {
   background-image:
     linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+}
+
+[data-theme="light"] .scanlines::before {
+  opacity: 0.35;
+}
+
+[data-theme="light"] .neon-glow-primary {
+  box-shadow: var(--shadow-neon-primary);
+}
+
+[data-theme="light"] .neon-glow-secondary {
+  box-shadow: var(--shadow-neon-secondary);
 }
 
 .material-symbols-outlined {

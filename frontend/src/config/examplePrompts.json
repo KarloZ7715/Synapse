@@ -1,0 +1,82 @@
+[
+  {
+    "id": "backend-api-rest",
+    "text": "Necesito un ejemplo minimo sobre API REST en backend. ya tengo una implementacion parcial. me esta frenando el avance del dia.",
+    "domain": "backend",
+    "nivel": "intermedio",
+    "emotion": "frustracion",
+    "validatedConfidence": 0.954
+  },
+  {
+    "id": "frontend-formularios",
+    "text": "Para una practica necesito explicar formularios dentro de frontend. puedo seguir codigo si me explican el criterio. busco una explicacion clara con un ejemplo.",
+    "domain": "frontend",
+    "nivel": "intermedio",
+    "emotion": "neutral",
+    "validatedConfidence": 0.937
+  },
+  {
+    "id": "db-sql",
+    "text": "Necesito un ejemplo minimo sobre SQL en bases_de_datos. ya tengo una implementacion parcial. me esta frenando el avance del dia. quiero entender el motivo tecnico antes de decidir.",
+    "domain": "bases_de_datos",
+    "nivel": "intermedio",
+    "emotion": "curiosidad",
+    "validatedConfidence": 1.0
+  },
+  {
+    "id": "movil-ciclo-vida",
+    "text": "Para una practica necesito explicar ciclo de vida dentro de movil. necesito una explicacion paso a paso. ya avance y quiero dejarlo mejor estructurado.",
+    "domain": "movil",
+    "nivel": "principiante",
+    "emotion": "motivacion",
+    "validatedConfidence": 0.962
+  },
+  {
+    "id": "devops-docker",
+    "text": "Necesito un ejemplo minimo sobre Docker en devops. ya tengo una implementacion parcial. necesito una ruta de solucion pronto. quiero entender el motivo tecnico antes de decidir.",
+    "domain": "devops",
+    "nivel": "intermedio",
+    "emotion": "curiosidad",
+    "validatedConfidence": 1.0
+  },
+  {
+    "id": "ds-metricas",
+    "text": "Para una practica necesito explicar metricas dentro de data_science. quiero analizar rendimiento, concurrencia o arquitectura. busco una explicacion clara con un ejemplo.",
+    "domain": "data_science",
+    "nivel": "avanzado",
+    "emotion": "neutral",
+    "validatedConfidence": 0.981
+  },
+  {
+    "id": "sec-jwt",
+    "text": "Necesito un ejemplo minimo sobre autenticacion JWT en sistemas_seguridad. todavia estoy afianzando los fundamentos. me esta frenando el avance del dia.",
+    "domain": "sistemas_seguridad",
+    "nivel": "principiante",
+    "emotion": "neutral",
+    "validatedConfidence": 0.966
+  },
+  {
+    "id": "general-practicas",
+    "text": "Para una practica necesito explicar buenas practicas dentro de general. puedo seguir codigo si me explican el criterio. busco una explicacion clara con un ejemplo.",
+    "domain": "general",
+    "nivel": "intermedio",
+    "emotion": "neutral",
+    "validatedConfidence": 0.944
+  },
+  {
+    "id": "backend-laravel-db",
+    "text": "Error en Laravel Illuminate Database QueryException SQLSTATE password authentication failed for user postgres",
+    "domain": "backend",
+    "nivel": "intermedio",
+    "emotion": "frustracion",
+    "validatedConfidence": 0.913
+  },
+  {
+    "id": "movil-flutter-dep",
+    "text": "Problema con la depedencia Flutter_bluetooth_serial",
+    "domain": "movil",
+    "nivel": "intermedio",
+    "emotion": "frustracion",
+    "validatedConfidence": 0.889
+  }
+]
