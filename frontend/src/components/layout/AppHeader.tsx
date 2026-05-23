@@ -82,11 +82,12 @@ export function AppHeader(props: {
         </button>
         <button
           type="button"
-          class="p-2 text-on-surface-variant transition-all hover:bg-surface-variant hover:text-primary-fixed"
+          class="theme-toggle-btn p-2 text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-primary-fixed"
           onClick={toggle}
           aria-label={theme() === "dark" ? "Modo claro" : "Modo oscuro"}
+          title={theme() === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
         >
-          <span class="material-symbols-outlined">
+          <span class="theme-toggle-icon material-symbols-outlined">
             {theme() === "dark" ? "light_mode" : "dark_mode"}
           </span>
         </button>

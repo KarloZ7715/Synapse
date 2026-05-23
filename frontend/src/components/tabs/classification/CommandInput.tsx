@@ -1,4 +1,5 @@
 import { Show } from "solid-js";
+import { ExamplePromptCarousel } from "~/components/prompts/ExamplePromptCarousel";
 import type { ClassificationResult } from "~/types/classifier";
 
 export function CommandInput(props: {
@@ -39,6 +40,10 @@ export function CommandInput(props: {
           </div>
         )}
       </Show>
+      <ExamplePromptCarousel
+        disabled={props.disabled}
+        onSelect={(text) => props.onChange(text)}
+      />
       <div class="relative flex items-end border-b-2 border-primary-fixed bg-surface transition-shadow focus-within:shadow-[0_4px_12px_rgba(57,255,20,0.2)]">
         <span class="absolute bottom-3 left-0 pl-2 font-mono text-primary-fixed">&gt;</span>
         <textarea

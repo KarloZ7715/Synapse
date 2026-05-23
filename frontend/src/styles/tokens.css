@@ -101,12 +101,4 @@
   --border-color: var(--color-outline-variant);
 }
 
-[data-theme="light"] {
-  --bg-base: #f7f7f4;
-  --bg-elevated: #e6e5e0;
-  --bg-surface: #cdcdc9;
-  --text-primary: #262510;
-  --text-secondary: #7a7974;
-  --text-tertiary: #a0a09a;
-  --border-color: #cdcdc9;
-}
+/* Tokens claros completos: ver theme-light.css */

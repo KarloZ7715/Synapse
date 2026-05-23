@@ -1,0 +1,84 @@
+/* Transición cinematográfica al cambiar tema */
+html.theme-transition-active,
+html.theme-transition-active *,
+html.theme-transition-active *::before,
+html.theme-transition-active *::after {
+  transition-property: background-color, color, border-color, fill, stroke, box-shadow, outline-color;
+  transition-duration: 0.55s;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes theme-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.14;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.theme-flash-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    color-mix(in srgb, var(--color-primary-fixed) 35%, transparent),
+    transparent 70%
+  );
+  animation: theme-flash 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+[data-theme="light"] .theme-flash-overlay {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    color-mix(in srgb, var(--color-secondary-fixed) 28%, transparent),
+    transparent 70%
+  );
+}
+
+.theme-toggle-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle-btn .theme-toggle-icon {
+  display: inline-flex;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+}
+
+.theme-toggle-btn:active .theme-toggle-icon {
+  transform: scale(0.82) rotate(-18deg);
+}
+
+html.theme-transition-active .theme-toggle-btn .theme-toggle-icon {
+  transform: rotate(180deg) scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transition-active,
+  html.theme-transition-active *,
+  html.theme-transition-active *::before,
+  html.theme-transition-active *::after {
+    transition-duration: 0.01ms;
+  }
+
+  .theme-flash-overlay {
+    animation: none;
+    opacity: 0;
+  }
+
+  .theme-toggle-btn .theme-toggle-icon {
+    transition-duration: 0.01ms;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
