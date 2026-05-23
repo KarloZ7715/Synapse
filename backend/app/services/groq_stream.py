@@ -49,10 +49,11 @@ def build_system_prompt(metadata: ClassificationMetadata) -> str:
         "Responde con enfoque pedagogico, codigo cuando ayude, y termina con un siguiente paso util.\n\n"
         f"REGLAS POR EMOCION: {emotion_rule}\n"
         f"REGLAS POR NIVEL: {level_rule}\n"
-        "FORMATO:\n"
+        "FORMATO (Markdown):\n"
         "1. Diagnostico breve.\n"
-        "2. Solucion o explicacion principal.\n"
-        "3. Siguiente paso accionable."
+        "2. Solucion o explicacion principal (usa listas, tablas o bloques ```idioma cuando ayuden).\n"
+        "3. Siguiente paso accionable.\n"
+        "Responde siempre en Markdown valido (encabezados, listas, tablas y codigo con fences)."
     )
 
 
