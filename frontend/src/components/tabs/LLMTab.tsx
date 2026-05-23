@@ -1,4 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
+import { MarkdownContent } from "~/components/markdown/MarkdownContent";
 import type { ConversationStore } from "~/store/conversation";
 import type { ChatOptions } from "~/types/chat";
 
@@ -20,7 +21,10 @@ const PRESETS: ReadonlyArray<ModelPreset> = [
   },
 ];
 
-export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatOptions) => void | Promise<void> }) {
+export function LLMTab(props: {
+  convo: ConversationStore;
+  onRun: (options: ChatOptions) => void | Promise<void>;
+}) {
   const [activeId, setActiveId] = createSignal(PRESETS[0]?.id ?? "llama-3.1-8b-instant");
   const [temperature, setTemperature] = createSignal(0.7);
   const [topP, setTopP] = createSignal(0.9);
@@ -28,7 +32,8 @@ export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatO
 
   const meta = () => props.convo.lastResult?.metadata ?? null;
   const llm = () => props.convo.llm;
-  const canRun = () => Boolean(meta() && props.convo.lastSubmittedText && llm().status !== "streaming");
+  const canRun = () =>
+    Boolean(meta() && props.convo.lastSubmittedText && llm().status !== "streaming");
 
   const handleRun = () => {
     void props.onRun({
@@ -43,9 +48,7 @@ export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatO
     <div class="relative flex flex-1 overflow-y-auto bg-surface">
       <div class="mx-auto flex w-full max-w-350 flex-col gap-margin-md p-margin-md md:p-margin-lg">
         <div class="flex items-center gap-4 border-2 border-primary-fixed/40 bg-primary-fixed/10 p-margin-sm">
-          <span class="material-symbols-outlined text-2xl text-primary-fixed">
-            hub
-          </span>
+          <span class="material-symbols-outlined text-2xl text-primary-fixed">hub</span>
           <div class="flex-1">
             <div class="font-display text-[16px] font-bold uppercase tracking-wider text-primary-fixed">
               BACKEND · /api/chat
@@ -66,7 +69,7 @@ export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatO
               Configuración Motor LLM
             </h2>
             <p class="mt-2 font-mono text-[12px] uppercase text-on-surface-variant">
-                  Configuración real del request hacia FastAPI + Groq
+              Configuración real del request hacia FastAPI + Groq
             </p>
           </div>
           <button
@@ -218,8 +221,7 @@ export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatO
                       </span>
                       <span class="text-primary-fixed-dim">
                         {"\n\n"}REGLAS:
-                        {"\n"}1. Urgencia detectada: {m().urgencia}.
-                        {"\n"}2. Dominio: {m().dominio}.
+                        {"\n"}1. Urgencia detectada: {m().urgencia}.{"\n"}2. Dominio: {m().dominio}.
                         {"\n"}3. Adapta el tono según emoción.
                         {"\n"}4. Termina con un siguiente paso accionable.
                       </span>
@@ -269,7 +271,10 @@ export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatO
                 Latencia / proveedor
               </div>
               <div class="flex items-baseline justify-between font-display text-[20px] text-on-surface">
-                <span>{llm().usage?.latency_ms ?? "—"}{llm().usage ? "ms" : ""}</span>
+                <span>
+                  {llm().usage?.latency_ms ?? "—"}
+                  {llm().usage ? "ms" : ""}
+                </span>
                 <span class="font-mono text-[11px] text-on-surface-variant">
                   {llm().usage?.provider ?? activeId()}
                 </span>
@@ -288,19 +293,20 @@ export function LLMTab(props: { convo: ConversationStore; onRun: (options: ChatO
               <div class="mb-2 border-b border-outline-variant pb-1 font-mono text-[10px] uppercase text-on-surface-variant">
                 Stream de respuesta
               </div>
-              <div class="flex-1 whitespace-pre-wrap border border-outline-variant bg-background p-3 font-mono text-[12px] leading-relaxed text-on-surface">
+              <div class="flex-1 border border-outline-variant bg-background p-3">
                 <Show
                   when={llm().response}
                   fallback={
-                    <span class="text-on-surface-variant">
+                    <span class="font-mono text-[12px] text-on-surface-variant">
                       Ejecuta el LLM para ver aquí la respuesta generada por el backend.
                     </span>
                   }
                 >
-                  {llm().response}
-                  <Show when={llm().status === "streaming"}>
-                    <span class="animate-pulse text-primary-fixed">█</span>
-                  </Show>
+                  <MarkdownContent
+                    source={llm().response}
+                    streaming={llm().status === "streaming"}
+                    class="text-[12px]"
+                  />
                 </Show>
               </div>
             </div>
@@ -338,7 +344,7 @@ function SliderRow(props: {
         max={props.max}
         step={props.step}
         value={props.value}
-        onInput={(e) => props.onChange(parseFloat(e.currentTarget.value))}
+        onInput={(e) => props.onChange(Number.parseFloat(e.currentTarget.value))}
         aria-label={props.label}
         title={props.label}
         class="w-full accent-primary-container"

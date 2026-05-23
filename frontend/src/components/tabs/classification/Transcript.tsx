@@ -1,4 +1,5 @@
 import { For, Show } from "solid-js";
+import { MarkdownContent } from "~/components/markdown/MarkdownContent";
 import type { ConversationTurn, LlmState } from "~/store/conversation";
 import type { ClassificationResult, ClassifierStatus } from "~/types/classifier";
 
@@ -87,7 +88,8 @@ function ClassifierBubble(props: { result: ClassificationResult }) {
         </div>
         <div class="mt-4 space-y-3">
           <p class="text-on-surface-variant">
-            Submodelo local clasificó la consulta. Metadata lista para construir el prompt y enviar la petición al LLM.
+            Submodelo local clasificó la consulta. Metadata lista para construir el prompt y enviar
+            la petición al LLM.
           </p>
           <dl class="grid grid-cols-2 gap-x-4 gap-y-2 border border-outline-variant bg-surface-container-lowest p-3">
             <dt class="text-on-surface-variant">nivel</dt>
@@ -175,15 +177,17 @@ function LlmBubble(props: { llm: LlmState }) {
               <div class="border border-error/40 bg-error/10 p-3 text-error">{error()}</div>
             )}
           </Show>
-          <div class="whitespace-pre-wrap border border-outline-variant bg-surface-container-lowest p-3 leading-relaxed">
+          <div class="border border-outline-variant bg-surface-container-lowest p-3">
             <Show
               when={props.llm.response}
-              fallback={<span class="text-on-surface-variant">Esperando tokens del backend...</span>}
+              fallback={
+                <span class="text-on-surface-variant">Esperando tokens del backend...</span>
+              }
             >
-              {props.llm.response}
-              <Show when={props.llm.status === "streaming"}>
-                <span class="animate-pulse text-secondary-fixed">█</span>
-              </Show>
+              <MarkdownContent
+                source={props.llm.response}
+                streaming={props.llm.status === "streaming"}
+              />
             </Show>
           </div>
           <Show when={props.llm.usage}>
