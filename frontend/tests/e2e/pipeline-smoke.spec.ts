@@ -14,11 +14,7 @@ test.describe("pipeline smoke", () => {
     await expect(page.getByText("Synapse")).toBeVisible();
     await page.getByTestId("chat-input").fill("No entiendo nada de recursividad en Python");
     await page.getByRole("button", { name: /enviar/i }).click();
-    await expect(page.getByTestId("metadata-panel")).toContainText(
-      /principiante|intermedio|avanzado/,
-      {
-        timeout: 90_000,
-      },
-    );
+    await expect(page.getByText("CLASSIFIER_OUTPUT")).toBeVisible({ timeout: 90_000 });
+    await expect(page.locator("dd").filter({ hasText: /principiante|intermedio|avanzado/i })).toBeVisible();
   });
 });

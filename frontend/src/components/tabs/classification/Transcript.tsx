@@ -21,8 +21,10 @@ export function Transcript(props: { status: ClassifierStatus; convo: Conversatio
                 {(error) => <ClassifierErrorBubble error={error()} />}
               </Show>
               <Show
-                when={() =>
-                  turn.llm.status !== "idle" || turn.llm.response.length > 0 || turn.llm.error
+                when={
+                  turn.llm.status !== "idle" ||
+                  turn.llm.response.length > 0 ||
+                  turn.llm.error
                 }
               >
                 <LlmBubble
@@ -183,12 +185,12 @@ function LlmBubble(props: {
           <p class="text-on-surface-variant">
             Respuesta generada por el LLM a partir de los metadatos inferidos por la red neuronal.
           </p>
-          <Show when={() => props.error()}>
+          <Show when={props.error()}>
             <div class="border border-error/40 bg-error/10 p-3 text-error">{props.error()}</div>
           </Show>
           <div class="border border-outline-variant bg-surface-container-lowest p-3">
             <Show
-              when={() => props.response().length > 0}
+              when={props.response().length > 0}
               fallback={
                 <span class="text-on-surface-variant">Esperando tokens del backend...</span>
               }
@@ -199,7 +201,7 @@ function LlmBubble(props: {
               />
             </Show>
           </div>
-          <Show when={() => props.usage()}>
+          <Show when={props.usage()}>
             <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-outline-variant pt-2 text-[11px] md:grid-cols-4">
               <div>
                 <div class="text-on-surface-variant">PROVEEDOR</div>

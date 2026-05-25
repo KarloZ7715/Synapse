@@ -237,7 +237,7 @@ TECH_CONSTRAINTS = (
     "pensando en una entrega academica", "con configuracion compartida", "usando una version reciente",
     "con documentacion escasa", "con cambios minimos", "comparando dos alternativas",
     "probando primero en local", "revisando una traza larga", "con entradas de usuario",
-    "con datos en espanol", "buscando una solucion reproducible", "separando responsabilidades",
+    "con datos en español", "buscando una solucion reproducible", "separando responsabilidades",
     "con una restriccion de tiempo", "sin perder legibilidad", "con varios casos borde",
     "optimizando solo lo necesario", "con dependencias ya instaladas", "a partir de codigo existente",
 )

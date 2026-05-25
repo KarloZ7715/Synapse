@@ -31,7 +31,6 @@ export function ClassificationTab(props: {
           onChange={(v) => props.setConvo("draftQuestion", v)}
           onSubmit={() => void props.onClassify()}
           disabled={props.busy || props.classifier.status() === "error"}
-          lastResult={props.convo.lastResult}
         />
       </section>
       <Show when={!props.isMobile}>

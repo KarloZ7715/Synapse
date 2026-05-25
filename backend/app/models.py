@@ -32,6 +32,15 @@ class ClassificationMetadata(BaseModel):
     confianza: float = Field(ge=0.0, le=1.0)
 
 
+class HeadConfidences(BaseModel):
+    """Probabilidad maxima por cabeza (0-1), opcional desde el clasificador ONNX."""
+
+    nivel_tecnico: float = Field(ge=0.0, le=1.0)
+    urgencia: float = Field(ge=0.0, le=1.0)
+    emocion: float = Field(ge=0.0, le=1.0)
+    dominio: float = Field(ge=0.0, le=1.0)
+
+
 class ChatMessage(BaseModel):
     rol: Literal["user", "assistant"]
     contenido: str = Field(min_length=1, max_length=4000)
@@ -48,4 +57,14 @@ class ChatRequest(BaseModel):
     pregunta: str = Field(min_length=1, max_length=4000)
     metadata: ClassificationMetadata
     historial: list[ChatMessage] = Field(default_factory=list, max_length=10)
+    head_confidences: HeadConfidences | None = None
     options: ChatOptions = Field(default_factory=ChatOptions)
+
+
+class PromptPreviewRequest(BaseModel):
+    metadata: ClassificationMetadata
+    head_confidences: HeadConfidences | None = None
+
+
+class PromptPreviewResponse(BaseModel):
+    system_prompt: str

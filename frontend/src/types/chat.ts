@@ -1,8 +1,10 @@
-import type { ClassificationMetadata } from "./classifier";
+import type { ClassificationMetadata, HeadKey } from "./classifier";
 
 /** Contrato previsto con FastAPI (Fase 9); el frontend solo tipa aquí. */
 export type MessageRole = "user" | "assistant";
 export type LlmProvider = "groq" | "gemini";
+
+export type HeadConfidences = Record<HeadKey, number>;
 
 export type ChatMessage = {
   rol: MessageRole;
@@ -20,6 +22,7 @@ export type ChatRequest = {
   pregunta: string;
   metadata: ClassificationMetadata;
   historial?: ChatMessage[];
+  head_confidences?: HeadConfidences;
   options?: ChatOptions;
 };
 

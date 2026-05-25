@@ -12,6 +12,7 @@ import { PromptTab } from "~/components/tabs/PromptTab";
 import { TokenizerTab } from "~/components/tabs/TokenizerTab";
 import { useBreakpoint } from "~/hooks/useBreakpoint";
 import { useClassifier } from "~/hooks/useClassifier";
+import { buildHistorial } from "~/lib/buildHistorial";
 import { streamChat } from "~/lib/chatStream";
 import { scheduleStreamingUpdate } from "~/lib/scheduleUpdate";
 import {
@@ -21,7 +22,8 @@ import {
   createEmptyLlmState,
 } from "~/store/conversation";
 import { createUIStore } from "~/store/ui";
-import type { ChatOptions } from "~/types/chat";
+import type { ChatOptions, HeadConfidences } from "~/types/chat";
+import type { ClassificationMetadata } from "~/types/classifier";
 
 const DEFAULT_LLM_OPTIONS: ChatOptions = {
   model_id: "llama-3.1-8b-instant",
@@ -97,8 +99,9 @@ export default function App() {
   const runLlm = async (
     turnId: string,
     pregunta: string,
-    metadata: NonNullable<typeof convo.lastResult>["metadata"],
+    metadata: ClassificationMetadata,
     options: ChatOptions,
+    headConfidences?: HeadConfidences,
   ) => {
     stopActiveChat();
     const controller = new AbortController();
@@ -109,12 +112,15 @@ export default function App() {
     replaceTurnLlm(turnId, nextLlmState);
 
     try {
+      const chatRequest = {
+        pregunta,
+        metadata,
+        historial: buildHistorial(convo.turns, turnId),
+        options,
+        ...(headConfidences !== undefined ? { head_confidences: headConfidences } : {}),
+      };
       await streamChat(
-        {
-          pregunta,
-          metadata,
-          options,
-        },
+        chatRequest,
         {
           onToken: (token) => {
             scheduleStreamingUpdate(() => {
@@ -179,7 +185,7 @@ export default function App() {
         result: r,
         error: null,
       });
-      await runLlm(turnId, text, r.metadata, DEFAULT_LLM_OPTIONS);
+      await runLlm(turnId, text, r.metadata, DEFAULT_LLM_OPTIONS, r.headConfidences);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       setTurnClassification(turnId, {
@@ -209,7 +215,8 @@ export default function App() {
       return;
     }
 
-    await runLlm(currentTurnId, pregunta, metadata, options);
+    const headConfidences = convo.lastResult?.headConfidences;
+    await runLlm(currentTurnId, pregunta, metadata, options, headConfidences);
   };
 
   const busy = () =>

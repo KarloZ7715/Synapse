@@ -149,7 +149,7 @@ def low_urgency_signal(text: str, _tags: List[str]) -> bool:
     return any(term in normalized for term in LOW_URGENCY_HINT_TERMS)
 
 
-LABELING_PROMPT = """Analiza esta pregunta de programacion en espanol:
+LABELING_PROMPT = """Analiza esta pregunta de programacion en español:
 
 Titulo: {title}
 Cuerpo: {body}
@@ -178,7 +178,7 @@ Reglas:
 Responde SOLO con JSON valido:
 {{"nivel_tecnico": "principiante|intermedio|avanzado", "urgencia": "baja|media|alta"}}"""
 
-LABELING_PROMPT_EMOTION = """Analiza esta pregunta de programacion en espanol:
+LABELING_PROMPT_EMOTION = """Analiza esta pregunta de programacion en español:
 
 Titulo: {title}
 Cuerpo: {body}
@@ -217,7 +217,7 @@ Ejemplos:
 Responde SOLO con JSON valido:
 {{"nivel_tecnico": "principiante|intermedio|avanzado", "urgencia": "baja|media|alta", "emocion": "<una de la lista>"}}"""
 
-EMOTION_BACKFILL_PROMPT = """Lee esta pregunta de programacion en espanol y elige UNA emocion del vocabulario Synapse.
+EMOTION_BACKFILL_PROMPT = """Lee esta pregunta de programacion en español y elige UNA emocion del vocabulario Synapse.
 
 Titulo: {title}
 Cuerpo: {body}
@@ -228,7 +228,7 @@ Vocabulario permitido (exactamente una): {emociones}
 Responde SOLO con JSON valido:
 {{"emocion": "<una de la lista>"}}"""
 
-CALIBRATION_PROMPT = """Re-evalua esta pregunta de programacion en espanol para detectar subestimaciones.
+CALIBRATION_PROMPT = """Re-evalua esta pregunta de programacion en español para detectar subestimaciones.
 
 Titulo: {title}
 Cuerpo: {body}

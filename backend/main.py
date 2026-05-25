@@ -10,7 +10,8 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
-from app.models import ChatRequest
+from app.models import ChatRequest, PromptPreviewRequest, PromptPreviewResponse
+from app.prompts.builder import build_system_prompt
 from app.services.groq_stream import stream_chat_completion
 
 settings = get_settings()
@@ -38,6 +39,14 @@ async def health() -> dict[str, object]:
         "groq": "available" if groq_available else "unavailable",
         "cache_size": 0,
     }
+
+
+@app.post("/api/prompt/preview", response_model=PromptPreviewResponse)
+async def prompt_preview(request: PromptPreviewRequest) -> PromptPreviewResponse:
+    """Devuelve el system prompt ensamblado (misma logica que /api/chat)."""
+    return PromptPreviewResponse(
+        system_prompt=build_system_prompt(request.metadata, request.head_confidences),
+    )
 
 
 @app.post("/api/chat")

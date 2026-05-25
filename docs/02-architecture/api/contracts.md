@@ -28,7 +28,55 @@ Envía la pregunta del usuario con metadatos de clasificación y recibe la respu
   "historial": [
     { "rol": "user", "contenido": "¿Qué es un bucle for?" },
     { "rol": "assistant", "contenido": "Un bucle for es..." }
-  ]
+  ],
+  "head_confidences": {
+    "nivel_tecnico": 0.91,
+    "urgencia": 0.88,
+    "emocion": 0.85,
+    "dominio": 0.72
+  },
+  "options": {
+    "model_id": "llama-3.1-8b-instant",
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "max_tokens": 1024
+  }
+}
+```
+
+> **Ensamblaje del system prompt:** `backend/app/prompts/builder.py` (`build_system_prompt`). El frontend envía `historial` (últimos 10 mensajes de turnos previos completados) y opcionalmente `head_confidences` para suavizar reglas en cabezas con softmax &lt; 0.5.
+
+---
+
+### POST /api/prompt/preview
+
+Devuelve el system prompt ensamblado (misma lógica que `/api/chat`, sin invocar al LLM). Usado por las pestañas Prompt y LLM del HUD.
+
+**Request:**
+
+```json
+{
+  "metadata": {
+    "nivel_tecnico": "principiante",
+    "urgencia": "alta",
+    "emocion": "frustracion",
+    "dominio": "backend",
+    "confianza": 0.87
+  },
+  "head_confidences": {
+    "nivel_tecnico": 0.91,
+    "urgencia": 0.88,
+    "emocion": 0.85,
+    "dominio": 0.72
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "system_prompt": "Eres Synapse, un tutor de programacion..."
 }
 ```
 

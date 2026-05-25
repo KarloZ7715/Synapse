@@ -1,5 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 import { MarkdownContent } from "~/components/markdown/MarkdownContent";
+import { usePromptPreview } from "~/hooks/usePromptPreview";
 import type { ConversationStore } from "~/store/conversation";
 import type { ChatOptions } from "~/types/chat";
 
@@ -30,7 +31,9 @@ export function LLMTab(props: {
   const [topP, setTopP] = createSignal(0.9);
   const [maxTokens, setMaxTokens] = createSignal(2048);
 
-  const meta = () => props.convo.lastResult?.metadata ?? null;
+  const lastResult = () => props.convo.lastResult;
+  const meta = () => lastResult()?.metadata ?? null;
+  const { systemPrompt } = usePromptPreview(lastResult);
   const llm = () => props.convo.llm;
   const canRun = () =>
     Boolean(meta() && props.convo.lastSubmittedText && llm().status !== "streaming");
@@ -181,7 +184,7 @@ export function LLMTab(props: {
             <section>
               <div class="mb-2 flex items-end justify-between">
                 <h3 class="font-mono text-[12px] uppercase text-on-surface-variant">
-                  Prompt de Sistema (con vars sustituidas)
+                  Prompt de Sistema (ensamblado en backend)
                 </h3>
                 <div class="flex gap-2">
                   <Show when={meta()}>
@@ -199,7 +202,7 @@ export function LLMTab(props: {
                   </Show>
                 </div>
               </div>
-              <div class="relative whitespace-pre-wrap border border-outline-variant bg-[#0a0a0a] p-4 font-mono text-[12px] leading-relaxed">
+              <div class="relative max-h-64 overflow-y-auto whitespace-pre-wrap border border-outline-variant bg-[#0a0a0a] p-4 font-mono text-[12px] leading-relaxed">
                 <div class="absolute right-0 top-0 bg-outline-variant px-2 py-1 font-mono text-[10px] uppercase text-background">
                   READ_ONLY
                 </div>
@@ -207,26 +210,29 @@ export function LLMTab(props: {
                   when={meta()}
                   fallback={
                     <span class="text-on-surface-variant">
-                      Eres un asistente diseñado para tutorías de programación. Cuando exista una
-                      clasificación el prompt se sustituye con los metadatos reales.
+                      Clasifica una consulta para ver el system prompt que se envía a Groq.
                     </span>
                   }
                 >
-                  {(m) => (
-                    <>
-                      <span class="text-secondary-fixed-dim">
-                        Eres un tutor de programación para un usuario de nivel{" "}
-                        <strong class="text-primary-fixed">{m().nivel_tecnico}</strong> que se
-                        siente <strong class="text-primary-fixed">{m().emocion}</strong>.
-                      </span>
-                      <span class="text-primary-fixed-dim">
-                        {"\n\n"}REGLAS:
-                        {"\n"}1. Urgencia detectada: {m().urgencia}.{"\n"}2. Dominio: {m().dominio}.
-                        {"\n"}3. Adapta el tono según emoción.
-                        {"\n"}4. Termina con un siguiente paso accionable.
-                      </span>
-                    </>
-                  )}
+                  <Show
+                    when={!systemPrompt.loading}
+                    fallback={
+                      <span class="text-on-surface-variant animate-pulse">Cargando preview…</span>
+                    }
+                  >
+                    <Show
+                      when={!systemPrompt.error}
+                      fallback={
+                        <span class="text-error">
+                          {systemPrompt.error instanceof Error
+                            ? systemPrompt.error.message
+                            : String(systemPrompt.error)}
+                        </span>
+                      }
+                    >
+                      <span class="text-on-surface-variant">{systemPrompt()}</span>
+                    </Show>
+                  </Show>
                 </Show>
               </div>
             </section>

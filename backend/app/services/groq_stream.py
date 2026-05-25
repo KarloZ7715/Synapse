@@ -9,27 +9,10 @@ import httpx
 from fastapi import HTTPException
 
 from app.config import Settings
-from app.models import ChatRequest, ClassificationMetadata
+from app.models import ChatRequest
+from app.prompts.builder import build_messages
 
 GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions"
-
-EMOTION_MODIFIER: dict[str, str] = {
-    "frustracion": "Adopta un tono empatico y tranquilizador. Simplifica los conceptos al maximo.",
-    "confusion": "Estructura la respuesta paso a paso, sin asumir conocimiento previo.",
-    "curiosidad": "Aprovecha el interes del usuario y anade un ejemplo adicional corto.",
-    "ansiedad": "Empieza calmando. Responde directo y evita alarmismo.",
-    "motivacion": "Refuerza el impulso del usuario y termina con un siguiente paso accionable.",
-    "abrumado": "Reduce la respuesta a una sola idea por bloque y evita listas largas.",
-    "confiado": "Ve directo al punto con tono tecnico y concreto.",
-    "desesperado": "Da primero la salida practica y luego la explicacion.",
-    "neutral": "Usa un tono profesional y claro.",
-}
-
-LEVEL_MODIFIER: dict[str, str] = {
-    "principiante": "Evita jerga innecesaria, usa analogias y confirma la intuicion basica.",
-    "intermedio": "Asume sintaxis basica y enfatiza el patron conceptual.",
-    "avanzado": "Ve al grano y menciona tradeoffs o detalles internos cuando aporten valor.",
-}
 
 
 def sse_event(payload: dict[str, object] | str) -> str:
@@ -38,34 +21,6 @@ def sse_event(payload: dict[str, object] | str) -> str:
     else:
         data = json.dumps(payload, ensure_ascii=False)
     return f"data: {data}\n\n"
-
-
-def build_system_prompt(metadata: ClassificationMetadata) -> str:
-    emotion_rule = EMOTION_MODIFIER.get(metadata.emocion, "Usa un tono claro y profesional.")
-    level_rule = LEVEL_MODIFIER.get(metadata.nivel_tecnico, "Adapta la profundidad al usuario.")
-    return (
-        "Eres Synapse, un tutor de programacion en espanol. "
-        f"El usuario tiene nivel {metadata.nivel_tecnico}, urgencia {metadata.urgencia}, "
-        f"emocion {metadata.emocion} y dominio {metadata.dominio}. "
-        "Responde con enfoque pedagogico, codigo cuando ayude, y termina con un siguiente paso util.\n\n"
-        f"REGLAS POR EMOCION: {emotion_rule}\n"
-        f"REGLAS POR NIVEL: {level_rule}\n"
-        "FORMATO (Markdown):\n"
-        "1. Diagnostico breve.\n"
-        "2. Solucion o explicacion principal (usa listas, tablas o bloques ```idioma cuando ayuden).\n"
-        "3. Siguiente paso accionable.\n"
-        "Responde siempre en Markdown valido (encabezados, listas, tablas y codigo con fences)."
-    )
-
-
-def build_messages(request: ChatRequest) -> list[dict[str, str]]:
-    messages: list[dict[str, str]] = [
-        {"role": "system", "content": build_system_prompt(request.metadata)}
-    ]
-    for item in request.historial:
-        messages.append({"role": item.rol, "content": item.contenido})
-    messages.append({"role": "user", "content": request.pregunta})
-    return messages
 
 
 async def stream_chat_completion(

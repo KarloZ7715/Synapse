@@ -1,8 +1,9 @@
 import { For, Show, createMemo } from "solid-js";
+import { usePromptPreview } from "~/hooks/usePromptPreview";
 import type { ConversationStore } from "~/store/conversation";
 import type { ClassificationMetadata } from "~/types/classifier";
 
-const VAR_KEYS = ["LEVEL", "EMOTION", "URGENCY", "DOMAIN"] as const;
+const VAR_KEYS = ["LEVEL", "EMOTION", "URGENCY", "DOMAIN", "CONFIDENCE"] as const;
 type VarKey = (typeof VAR_KEYS)[number];
 
 const META_OF: Record<VarKey, keyof ClassificationMetadata> = {
@@ -10,42 +11,32 @@ const META_OF: Record<VarKey, keyof ClassificationMetadata> = {
   EMOTION: "emocion",
   URGENCY: "urgencia",
   DOMAIN: "dominio",
-};
-
-const EMOTION_MODIFIER: Record<string, string> = {
-  frustracion: "Adopta un tono empático y tranquilizador. Simplifica los conceptos al máximo.",
-  confusion: "Estructura la respuesta paso a paso, sin asumir conocimiento previo.",
-  curiosidad: "Aprovecha el interés del usuario: añade ejemplos extra y enlaces de profundización.",
-  ansiedad: "Empieza calmando: la respuesta es directa, sin alarmismo. No menciones consecuencias graves.",
-  motivacion: "Refuerza el momentum: respuesta concisa con un siguiente paso accionable.",
-  abrumado: "Reduce al mínimo. Una sola idea, sin opciones múltiples.",
-  confiado: "Trato técnico directo. Cero introducción.",
-  desesperado: "Solución primero, explicación después. Tono firme y empático.",
-  neutral: "Tono profesional estándar.",
-};
-
-const LEVEL_MODIFIER: Record<string, string> = {
-  principiante: "Evita jerga. Usa analogías. Termina con una pregunta exploratoria.",
-  intermedio: "Asume sintaxis básica. Resalta el patrón conceptual.",
-  avanzado: "Ve al grano con ejemplos optimizados. Permite referencias a internals.",
+  CONFIDENCE: "confianza",
 };
 
 export function PromptTab(props: { convo: ConversationStore }) {
-  const meta = () => props.convo.lastResult?.metadata ?? null;
+  const result = () => props.convo.lastResult;
+  const meta = () => result()?.metadata ?? null;
+  const { systemPrompt } = usePromptPreview(result);
 
   const varValue = (k: VarKey): string => {
     const m = meta();
     if (!m) return "—";
+    if (k === "CONFIDENCE") {
+      return `${Math.round(m.confianza * 100)}%`;
+    }
     return m[META_OF[k]].toString();
   };
 
-  const renderedPrompt = createMemo(() => {
-    const m = meta();
-    const lvl = m ? m.nivel_tecnico : "{LEVEL}";
-    const emo = m ? m.emocion : "{EMOTION}";
-    const urg = m ? m.urgencia : "{URGENCY}";
-    const dom = m ? m.dominio : "{DOMAIN}";
-    return { lvl, emo, urg, dom };
+  const headRows = createMemo(() => {
+    const r = result();
+    if (!r) return [];
+    return [
+      { key: "nivel_tecnico", label: "NIVEL", value: r.metadata.nivel_tecnico },
+      { key: "urgencia", label: "URGENCIA", value: r.metadata.urgencia },
+      { key: "emocion", label: "EMOCION", value: r.metadata.emocion },
+      { key: "dominio", label: "DOMINIO", value: r.metadata.dominio },
+    ] as const;
   });
 
   return (
@@ -57,7 +48,7 @@ export function PromptTab(props: { convo: ConversationStore }) {
               PROMPT_ENGINEERING_HUD
             </h2>
             <p class="mt-2 font-mono text-[12px] uppercase text-on-surface-variant">
-              Salida del submodelo → contexto del LLM upstream
+              System prompt ensamblado en backend (POST /api/prompt/preview)
             </p>
           </div>
           <div class="flex items-center gap-3 font-mono text-[11px]">
@@ -71,7 +62,6 @@ export function PromptTab(props: { convo: ConversationStore }) {
         </header>
 
         <div class="grid min-h-0 flex-1 grid-cols-1 border border-[#1a1a1a] lg:grid-cols-12">
-          {/* Left: Variable map */}
           <section class="relative flex flex-col bg-[#0a0a0a] p-4 lg:col-span-3">
             <CornerCrosses />
             <div class="mb-4 flex items-center gap-2 bg-surface-bright p-2 font-mono text-[11px] uppercase text-on-surface">
@@ -99,56 +89,52 @@ export function PromptTab(props: { convo: ConversationStore }) {
             </div>
           </section>
 
-          {/* Center: Prompt template */}
           <section class="relative flex flex-col border-[#1a1a1a] bg-black lg:col-span-6 lg:border-l lg:border-r">
             <div class="flex items-center justify-between bg-surface-bright p-2 font-mono text-[11px] uppercase text-on-surface">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-base">terminal</span>
-                SYSTEM_PROMPT_TEMPLATE
+                SYSTEM_PROMPT_LIVE
               </div>
-              <div class="font-mono text-[10px] text-on-surface-variant">v1.0 · static</div>
+              <div class="font-mono text-[10px] text-on-surface-variant">backend · v2</div>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 font-mono text-[13px] leading-relaxed">
-              <div class="mb-4 text-outline">/* MASTER_INSTRUCTION_SET_V1 */</div>
-              <p class="text-on-surface-variant">
-                Eres un tutor de programación experto. El usuario tiene un nivel{" "}
-                <PromptVar value={renderedPrompt().lvl} bound={!!meta()} />, se siente{" "}
-                <PromptVar value={renderedPrompt().emo} bound={!!meta()} />, su consulta es de
-                prioridad <PromptVar value={renderedPrompt().urg} bound={!!meta()} /> y el dominio
-                relevante es <PromptVar value={renderedPrompt().dom} bound={!!meta()} />.
-              </p>
-              <p class="mt-4 text-on-surface-variant">
-                Estructura tu respuesta:
-                <br />
-                1. Diagnóstico breve de la situación.
-                <br />
-                2. Solución técnica directa.
-                <br />
-                3. Explicación adaptada al nivel.
-              </p>
-              <div class="mt-4 text-outline">/* DYNAMIC_INJECTIONS_START */</div>
+            <div class="flex-1 overflow-y-auto p-6 font-mono text-[12px] leading-relaxed">
               <Show
-                when={meta()}
+                when={!meta()}
                 fallback={
-                  <p class="mt-2 text-outline-variant">
-                    [[INJECT_EMOTION_MODIFIER]]
-                    <br />
-                    [[INJECT_LEVEL_MODIFIER]]
-                  </p>
+                  <Show
+                    when={!systemPrompt.loading}
+                    fallback={
+                      <p class="text-on-surface-variant animate-pulse">
+                        Cargando system prompt desde backend…
+                      </p>
+                    }
+                  >
+                    <Show
+                      when={!systemPrompt.error}
+                      fallback={
+                        <p class="text-error">
+                          Error al cargar preview:{" "}
+                          {systemPrompt.error instanceof Error
+                            ? systemPrompt.error.message
+                            : String(systemPrompt.error)}
+                        </p>
+                      }
+                    >
+                      <pre class="whitespace-pre-wrap text-on-surface-variant">
+                        {systemPrompt() ?? ""}
+                      </pre>
+                    </Show>
+                  </Show>
                 }
               >
-                <p class="mt-2 text-on-surface">
-                  {EMOTION_MODIFIER[renderedPrompt().emo] ?? "[modificador emoción n/a]"}
-                </p>
-                <p class="mt-2 text-on-surface">
-                  {LEVEL_MODIFIER[renderedPrompt().lvl] ?? "[modificador nivel n/a]"}
+                <p class="text-outline-variant">
+                  Clasifica una consulta para ver el system prompt exacto que recibe Groq.
                 </p>
               </Show>
-              <div class="mt-4 text-outline">/* DYNAMIC_INJECTIONS_END */</div>
 
               <Show when={props.convo.lastSubmittedText}>
                 <div class="mt-6 border-t border-[#1a1a1a] pt-4">
-                  <div class="text-outline">/* USER_QUERY */</div>
+                  <div class="text-outline">/* USER_MESSAGE (rol user, no en system) */</div>
                   <p class="mt-2 whitespace-pre-wrap text-secondary-fixed">
                     {props.convo.lastSubmittedText}
                   </p>
@@ -156,32 +142,27 @@ export function PromptTab(props: { convo: ConversationStore }) {
               </Show>
             </div>
             <div class="border-t border-[#1a1a1a] bg-surface-container-lowest p-2 text-right font-mono text-[10px] text-on-surface-variant">
-              destino: backend /api/chat
+              destino: POST /api/chat · historial: turnos previos completados
             </div>
           </section>
 
-          {/* Right: Dynamic replacements */}
           <section class="relative flex flex-col bg-[#0a0a0a] p-4 lg:col-span-3">
             <CornerCrosses />
             <div class="mb-4 flex items-center gap-2 bg-surface-bright p-2 font-mono text-[11px] uppercase text-on-surface">
-              <span class="material-symbols-outlined text-base">swap_horiz</span>
-              DYNAMIC_REPLACEMENTS
+              <span class="material-symbols-outlined text-base">analytics</span>
+              HEAD_CONFIDENCES
             </div>
-            <div class="flex flex-1 flex-col gap-4 overflow-y-auto pr-2">
-              <ConditionalCard
-                condition="EMOTION"
-                value={renderedPrompt().emo}
-                rule={EMOTION_MODIFIER[renderedPrompt().emo] ?? "(sin regla específica)"}
-                active={!!meta()}
-                icon="psychology"
-              />
-              <ConditionalCard
-                condition="LEVEL"
-                value={renderedPrompt().lvl}
-                rule={LEVEL_MODIFIER[renderedPrompt().lvl] ?? "(sin regla específica)"}
-                active={!!meta()}
-                icon="school"
-              />
+            <div class="flex flex-1 flex-col gap-3 overflow-y-auto pr-2">
+              <For each={headRows()}>
+                {(row) => (
+                  <HeadConfidenceCard
+                    label={row.label}
+                    value={row.value}
+                    prob={result()?.headConfidences[row.key] ?? 0}
+                    active={!!meta()}
+                  />
+                )}
+              </For>
             </div>
           </section>
         </div>
@@ -190,43 +171,24 @@ export function PromptTab(props: { convo: ConversationStore }) {
   );
 }
 
-function PromptVar(props: { value: string; bound: boolean }) {
-  return (
-    <span
-      class={`border px-1 ${props.bound ? "border-primary-container/40 bg-[#1a1a1a] text-primary-container" : "border-outline-variant bg-surface-variant text-on-surface-variant"}`}
-    >
-      {props.bound ? props.value.toUpperCase() : `{${props.value}}`}
-    </span>
-  );
-}
-
-function ConditionalCard(props: {
-  condition: string;
+function HeadConfidenceCard(props: {
+  label: string;
   value: string;
-  rule: string;
+  prob: number;
   active: boolean;
-  icon: string;
 }) {
+  const pct = () => Math.round(props.prob * 100);
+  const weak = () => props.prob < 0.5;
+
   return (
-    <div class="flex flex-col border border-outline-variant bg-black">
-      <div class="flex items-center justify-between border-b border-outline-variant bg-[#1a1a1a] p-2">
-        <span class="font-mono text-[10px] uppercase text-primary-container">
-          CONDICIÓN: {props.condition}
-        </span>
-        <span class="material-symbols-outlined text-sm text-on-surface-variant">{props.icon}</span>
-      </div>
-      <div class="p-3">
-        <div class="mb-2 inline-block border border-outline-variant bg-[#1a1a1a] px-2 py-0.5 font-mono text-[11px] uppercase text-on-surface">
-          {props.active ? props.value : "—"}
-        </div>
-        <div class="flex items-center gap-2 text-outline-variant">
-          <span class="material-symbols-outlined text-base">arrow_downward</span>
-        </div>
-        <div
-          class={`border-l-2 py-1 pl-3 font-mono text-[11px] ${props.active ? "border-primary-container text-on-surface-variant" : "border-outline-variant text-on-surface-variant opacity-50"}`}
-        >
-          {props.rule}
-        </div>
+    <div class="flex flex-col border border-outline-variant bg-black p-3">
+      <div class="mb-1 font-mono text-[10px] uppercase text-primary-container">{props.label}</div>
+      <div class="font-mono text-[11px] uppercase text-on-surface">{props.active ? props.value : "—"}</div>
+      <div
+        class={`mt-2 font-mono text-[10px] ${weak() ? "text-error" : "text-on-surface-variant"}`}
+      >
+        softmax max: {props.active ? `${pct()}%` : "—"}
+        {weak() && props.active ? " · cabeza debil" : ""}
       </div>
     </div>
   );

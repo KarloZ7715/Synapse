@@ -107,7 +107,6 @@ PERFIL DEL ESTUDIANTE:
 | --------------------- | ------------------------------------------------------------------------------------------------------- |
 | `frontend`            | Ejemplos con HTML/CSS/JS/React. Referencia a MDN. Demo visual cuando sea posible.                       |
 | `backend`             | Ejemplos con Python/Node.js. Conceptos de API, bases de datos.                                          |
-| `algoritmos`          | Razonamiento paso a paso antes que sintaxis. Pseudocódigo primero. Análisis de complejidad. |
 | `bases_de_datos`      | Ejemplos con SQL. Diagramas de esquemas en texto.                                                       |
 | `devops`              | Comandos de terminal. Conceptos de infraestructura.                                                     |
 | `movil`               | Ejemplos con Flutter/React Native/Swift/Kotlin.                                                         |
@@ -139,6 +138,8 @@ Sé conciso pero completo. Máximo 300 palabras por respuesta.
 ```
 
 ## 6. Ensamblaje Completo (Backend FastAPI)
+
+> **Implementación actual:** `backend/app/prompts/builder.py` (`build_system_prompt`, `build_messages`, `select_rules`). Modificadores en `backend/app/prompts/modifiers.py`. Preview HTTP: `POST /api/prompt/preview`.
 
 ```python
 def build_enriched_prompt(
